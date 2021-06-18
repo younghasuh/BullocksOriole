@@ -1,0 +1,274 @@
+---
+title: "Main code"
+output: 
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_float: true
+date: "6/18/2021"
+editor_options: 
+  chunk_output_type: console
+---
+
+The following analyses is conducted on spectra data for 134 specimens. Sample sizes for each specimen category compose of the following:
+
+| Bullock's oriole | |   | Baltimore oriole |   |   |
+|----------|----------|----------|----------|----------|----------|
+| Historic | Modern | Reference | Historic | Modern | Reference |
+| 20 | 20 | 40 | 20 | 19 | 15 |
+
+Bullock's reference specimens come from the Museum of Vertebrate Zoology (MVZ; n = 20) and the University of Washington Burke Museum (UWBM; n = 20). For this manuscript, we exclude the 15 Baltimore oriole reference specimens. 
+
+**Set up**: integration time, 100 ms; 10 readings averaged per recording; boxcar width 10
+
+Each specimen has 5 patches measured (2 black 3 orange) and each patch is measured 3 times; i.e. 15 measurements per specimen. 
+
+![**Fig 1**. Patches measured on specimens.](pics.png){width=50%}
+
+<br>
+
+### Load libraries
+Using `pavo` as main, rest as data manipulation & organization
+```{r Load libraries, message = FALSE, results = "hide", warning=FALSE}
+library(pavo)
+library(data.table)
+library(readxl)
+library(tidyverse)
+library(stringr)
+library(knitr)
+library(car)
+library(ggpubr)
+library(ggpmisc)
+library(lme4)
+```
+
+Set ggplot themes for figures
+```{r ggplot theme}
+mytheme <- theme(
+  plot.title = element_text(size=20,face="bold",color="black"),      
+  axis.text=element_text(size=16, color="black"),
+  axis.title=element_text(size=18,face="bold",color="black"),
+  axis.text.x=element_text(size=16, color="black"), 
+  axis.text.y=element_text(size=16, color="black"),
+  legend.text = element_text(size=16, color="black"),
+  legend.title = element_text(size=16, color="black", face="bold"))
+```
+
+# Import data
+## Attribute data
+Load `specimen_info.xls` & filter out necessary info
+
+```{r Attribute data, message = FALSE, warning=FALSE}
+attributes <- read_excel("oriole_specimen_info.xlsx")
+knitr::kable(head(attributes))
+
+attributes$date <- as.numeric(attributes$CollectionDate)
+attributes$date <- as.Date(attributes$date, origin = "1899-12-30")
+
+att <- attributes[,c("ID", "sp_id", "cat", "date", "Code")]
+att$cat <- as.factor(att$cat)
+
+# change dates for following because dates in the 1800s are formatted incorrectly
+att[43, "date"] <- as.Date("8/15/1873", "%m/%d/%Y")
+att[45, "date"] <- as.Date("5/7/1878", "%m/%d/%Y")
+
+
+# Just IDs and category
+idcat <- att[,c("ID", "cat")]
+```
+
+
+<br>
+
+
+## Spectra data 
+Finds and imports spectra files from a folder `allspec` and `burke`. Contains replicated data for one missing measurement. 
+
+```{r Load specs, message = FALSE, results = "hide"}
+spec <- getspec("allspec", ext = "txt", lim = c(300, 700))  # 1710 files
+spec <- as.rspec(spec)
+
+burke <- getspec("burke", ext = "txt", lim = c(300, 700)) #300 files
+```
+
+## Visually check spectra
+```{r See other spectra, message = FALSE, fig.cap = "**Fig 2a.** Spectra of specimens measured in 2019."}
+plot(spec)
+```
+
+```{r See burke spectra, message = FALSE, fig.cap = "**Fig 2b.** Spectra of UWBM specimens measured in 2021."}
+plot(burke)
+```
+
+
+### Fix odd peaks
+Measurements for the Burke museum specimen have two peaks in the spectra that occur for unknown reasons. They were replaced by deleting reflectance at those wavelengths and interpolating the values from before/after. The areas of concern seem to be 470-500 nm and 510-560 nm. 
+
+ 1. Replace odd wavelengths with `NA`
+ 2. Use `as.rspec` to interpolate gaps
+```{r Fix weird specs, message = FALSE}
+wl <- burke$wl
+
+# replace with NA
+burke$wl <- as.numeric(burke$wl)
+
+burke[which(burke$wl > 470 & burke$wl < 500),] <- NA
+burke[which(burke$wl > 515 & burke$wl < 560),] <- NA
+
+burke[,1] <- wl # feed back in because it gets deleted
+
+# Interpolate
+burke <- as.rspec(burke)
+
+# join 
+allspec <- merge(spec, burke)
+```
+
+3. Check new spectra
+
+```{r See new burke spectra, message = FALSE, fig.cap = "**Fig 2c.** Spectra of UWBM specimens"}
+plot(burke)
+```
+
+<br>
+
+## Average spectra
+Modify names for future processing.
+```{r Modify names for processing, echo = FALSE, message = FALSE}
+# average spectra (3 measurements per patch) per specimen part
+m.allspec <- aggspec(allspec, by = 3, FUN = mean, trim = FALSE)
+
+# change values to color patch names
+allsp.id <- names(m.allspec)
+allsp.id <- gsub("_Reflection", "", allsp.id)
+allsp.id <- gsub("_00001", "_blk1", allsp.id)
+allsp.id <- gsub("_00004", "_blk2", allsp.id)
+allsp.id <- gsub("_00007", "_orn1", allsp.id)
+allsp.id <- gsub("_00010", "_orn2", allsp.id)
+allsp.id <- gsub("_00013", "_orn3", allsp.id) 
+
+colnames(m.allspec) <- allsp.id
+```
+
+## Smooth spectra
+Suitable soothing parameter `span = 0.14` is the minimum amount of smoothing to remove spectral noise. 
+
+```{r Smooth spectra, message = FALSE, fig.cap = "**Fig 3.** Check smoothing parameters"}
+# check which smoothing parameter to use
+plotsmooth(m.allspec, minsmooth = 0.05, maxsmooth = 0.5, curves = 6, ask = FALSE, specnum = 6)
+
+# smooth spectra based on that
+allspec.sm <- procspec(m.allspec, opt = "smooth", span = 0.14, fixneg = "zero") 
+```
+
+```{r All spectra in color, fig.cap = "**Fig 4.** Spectra based on their color"}
+# spectra in their colors
+plot(allspec.sm, col = spec2rgb(allspec.sm), cex.lab = 1.5, cex.axis = 1.5)
+```
+
+<br>
+
+# Split orange and black patches
+### Extract orange patches
+
+Subset then extract
+```{r Extract orange patches, message = FALSE}
+allspec.orn <- subset(allspec.sm, "orn") #n=343
+# average 3 measurements
+allspec.orn.avg <- aggspec(allspec.orn, by = 3, FUN = mean, trim = FALSE) 
+```
+
+Get spetra
+```{r, message = FALSE, results = FALSE}
+# get names from list
+allspecimens <- names(allspec.orn.avg)
+allds <- as.data.frame(allspecimens)
+
+# change names to match
+allds$ID <- gsub("MVZ_", "MVZ", allds$allspecimens)
+idcat$ID2 <- gsub("MVZ.", "MVZ", idcat$ID)
+idcat$ID2 <- gsub("UWBM.", "UWBM", idcat$ID2)
+idcat$ID2 <- gsub("UWBMBU", "UWBM", idcat$ID2)
+
+
+allds$ID2 <- gsub("\\_.*", "", allds$ID) #extract values before _
+allds$patch <- gsub(".*_", "", allds$allspecimens) #extract values after _
+
+idcat <- rbind(idcat, data.frame(ID = "wl", cat= "wl", ID2 = "wl")) # to match
+
+#n_distinct(allds$ID2) #n=135
+#n_distinct(ct$ID2) #n=135
+
+# Create a new column with specimen type and patch
+allds2 <- allds %>% 
+  left_join(idcat, by = "ID2", keep=FALSE) 
+
+#table(allds2$cat)
+
+allcategory <- allds2$cat
+
+# make duplicate 
+asoa <- allspec.orn.avg
+colnames(asoa) <- allcategory
+```
+
+Plot average spectra 
+```{r, fig.cap = "**Fig 5.** Spectra based on their specimen category"}
+# plot
+#plot(asoa.agg, col = spec2rgb(asoa.agg), cex.lab = 1.5, cex.axis = 1.5)
+
+# plot by specimen
+aggplot(asoa, by = allcategory, FUN.center = median, ylim = c(0, 65),
+        alpha = 0.3, legend = T, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
+legend(290, 67, legend = c("BAOR reference", "BAOR historic", "BAOR modern", "BUOR historic", "BUOR modern", "BUOR reference"), col = c("red", "royalblue", "green", "purple", "orange", "yellow"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent")
+```
+
+Get Colorimetric variables
+```{r}
+# use summary function
+allsum.orn <- summary(allspec.orn.avg)
+setDT(allsum.orn, keep.rownames = TRUE)[]
+
+# convert MVZ names to be consistent with the specimen attribute data
+allsum.orn$rn <- gsub("MVZ_", "MVZ.", allsum.orn$rn)
+
+allid.orn <- do.call(rbind, strsplit(allsum.orn$rn, "\\_"))[, 1]
+
+allsum.orn$ID <- allid.orn #specimen ID
+
+# change UWBM
+allsum.orn$ID <- gsub("UWBM", "UWBM.BU", allsum.orn$ID)
+
+# Join spectra summary data with attribute data
+alldat.orn <- allsum.orn %>%
+  left_join(att, by = c("ID" = "ID"), keep = TRUE)
+```
+
+
+
+
+### Extract black patches
+```{r, message = FALSE, results = FALSE}
+allspec.blk <- subset(allspec.sm, "blk") #n = 77
+
+# average 3 measurements
+allspec.blk.avg <- aggspec(allspec.blk, by = 2, FUN = mean, trim = FALSE) 
+
+# Get colorimetric values
+allsum.blk <- summary(allspec.blk.avg)
+setDT(allsum.blk, keep.rownames = TRUE)[]
+
+# convert MVZ names to be consistent with the specimen attribute data
+allsum.blk$rn <- gsub("MVZ_", "MVZ.", allsum.blk$rn)
+
+allid.blk <- do.call(rbind, strsplit(allsum.blk$rn, "\\_"))[, 1]
+
+allsum.blk$ID <- allid.blk #specimen ID
+
+allsum.blk$ID <- gsub("UWBM", "UWBM.BU", allsum.blk$ID)
+
+
+# Join spectra summary data with attribute data
+alldat.blk <- allsum.blk %>%
+  left_join(att, by = c("ID" = "ID"), keep = TRUE)
+```
