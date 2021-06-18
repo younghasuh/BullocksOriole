@@ -10,14 +10,14 @@ editor_options:
   chunk_output_type: console
 ---
 
-The following analyses is conducted on spectra data for 134 specimens. Sample sizes for each specimen category compose of the following:
+The following analyses is conducted on spectra data for 119 specimens. Sample sizes for each specimen category compose of the following:
 
-| Bullock's oriole | |   | Baltimore oriole |   |   |
-|----------|----------|----------|----------|----------|----------|
-| Historic | Modern | Reference | Historic | Modern | Reference |
-| 20 | 20 | 40 | 20 | 19 | 15 |
+| Bullock's oriole | |   | Baltimore oriole |   |
+|----------|----------|----------|----------|----------|
+| Historic | Modern | Reference | Historic | Modern |
+| 20 | 20 | 40 | 20 | 19 |
 
-Bullock's reference specimens come from the Museum of Vertebrate Zoology (MVZ; n = 20) and the University of Washington Burke Museum (UWBM; n = 20). For this manuscript, we exclude the 15 Baltimore oriole reference specimens. 
+Bullock's reference specimens come from the Museum of Vertebrate Zoology (MVZ; n = 20) and the University of Washington Burke Museum (UWBM; n = 20).  
 
 **Set up**: integration time, 100 ms; 10 readings averaged per recording; boxcar width 10
 
@@ -68,11 +68,6 @@ attributes$date <- as.Date(attributes$date, origin = "1899-12-30")
 att <- attributes[,c("ID", "sp_id", "cat", "date", "Code")]
 att$cat <- as.factor(att$cat)
 
-# change dates for following because dates in the 1800s are formatted incorrectly
-att[43, "date"] <- as.Date("8/15/1873", "%m/%d/%Y")
-att[45, "date"] <- as.Date("5/7/1878", "%m/%d/%Y")
-
-
 # Just IDs and category
 idcat <- att[,c("ID", "cat")]
 ```
@@ -85,7 +80,7 @@ idcat <- att[,c("ID", "cat")]
 Finds and imports spectra files from a folder `allspec` and `burke`. Contains replicated data for one missing measurement. 
 
 ```{r Load specs, message = FALSE, results = "hide"}
-spec <- getspec("allspec", ext = "txt", lim = c(300, 700))  # 1710 files
+spec <- getspec("allspec", ext = "txt", lim = c(300, 700))  # 1485 files
 spec <- as.rspec(spec)
 
 burke <- getspec("burke", ext = "txt", lim = c(300, 700)) #300 files
@@ -179,7 +174,7 @@ allspec.orn.avg <- aggspec(allspec.orn, by = 3, FUN = mean, trim = FALSE)
 ```
 
 Get spetra
-```{r, message = FALSE, results = FALSE}
+```{r Orange patches - spectra, message = FALSE, results = FALSE}
 # get names from list
 allspecimens <- names(allspec.orn.avg)
 allds <- as.data.frame(allspecimens)
@@ -196,35 +191,32 @@ allds$patch <- gsub(".*_", "", allds$allspecimens) #extract values after _
 
 idcat <- rbind(idcat, data.frame(ID = "wl", cat= "wl", ID2 = "wl")) # to match
 
-#n_distinct(allds$ID2) #n=135
-#n_distinct(ct$ID2) #n=135
+# Check if specimen numbers match
+# n_distinct(allds$ID2) #n=120
+# n_distinct(ct$ID2) #n=120
 
 # Create a new column with specimen type and patch
 allds2 <- allds %>% 
   left_join(idcat, by = "ID2", keep=FALSE) 
 
-#table(allds2$cat)
-
+# Create separate string for category list
 allcategory <- allds2$cat
-
-# make duplicate 
-asoa <- allspec.orn.avg
-colnames(asoa) <- allcategory
 ```
 
 Plot average spectra 
-```{r, fig.cap = "**Fig 5.** Spectra based on their specimen category"}
-# plot
-#plot(asoa.agg, col = spec2rgb(asoa.agg), cex.lab = 1.5, cex.axis = 1.5)
-
+```{r Orange patches - plot average spectra by specimen, fig.cap = "**Fig 5.** Spectra based on their specimen category"}
 # plot by specimen
+asoa <- allspec.orn.avg
+colnames(asoa) <- allcategory
+
 aggplot(asoa, by = allcategory, FUN.center = median, ylim = c(0, 65),
-        alpha = 0.3, legend = T, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
-legend(290, 67, legend = c("BAOR reference", "BAOR historic", "BAOR modern", "BUOR historic", "BUOR modern", "BUOR reference"), col = c("red", "royalblue", "green", "purple", "orange", "yellow"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent")
+        alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
+legend(290, 67, legend = c("BA historic", "BA modern", "BU historic", "BU modern", "BU reference"), col = c("red", "royalblue", "green", "purple", "orange", "yellow"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent")
 ```
 
+
 Get Colorimetric variables
-```{r}
+```{r Orange patches - colorimetric variables, message = FALSE, results = FALSE}
 # use summary function
 allsum.orn <- summary(allspec.orn.avg)
 setDT(allsum.orn, keep.rownames = TRUE)[]
@@ -236,7 +228,7 @@ allid.orn <- do.call(rbind, strsplit(allsum.orn$rn, "\\_"))[, 1]
 
 allsum.orn$ID <- allid.orn #specimen ID
 
-# change UWBM
+# change UWBM to be consistent with the attribute data table
 allsum.orn$ID <- gsub("UWBM", "UWBM.BU", allsum.orn$ID)
 
 # Join spectra summary data with attribute data
@@ -244,12 +236,43 @@ alldat.orn <- allsum.orn %>%
   left_join(att, by = c("ID" = "ID"), keep = TRUE)
 ```
 
+#### Spectra split by species 
 
+```{r}
+# split by species
+asoa.ba <- subset(asoa, "Balt")
+asoa.bu <- subset(asoa, "Bull")
+
+
+allcat <- as.data.frame(allcategory)
+allcat2 <- allcat %>% 
+  filter(allcategory =="wl" | allcategory == "Balt_hist" | allcategory == "Balt_mod")
+colnames(asoa.ba) <- allcat2$allcategory
+
+allcat3 <- allcat %>% 
+  filter(allcategory =="wl" | allcategory == "Bull_hist" | allcategory == "Bull_mod" | allcategory == "Bull_ref")
+colnames(asoa.bu) <- allcat3$allcategory
+
+# plot & save
+png("all_spectra_bullocks.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+aggplot(asoa.bu, by = allcat3$allcategory, FUN.center = median, ylim = c(0, 65),
+        alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
+legend(290, 67, legend = c("Historic", "Modern", "Reference"), col = c("red", "royalblue", "green"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Bullock's oriole")
+dev.off()
+
+png("all_spectra_baltimore.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+aggplot(asoa.ba, by = allcat2$allcategory, FUN.center = median, ylim = c(0, 65),
+        alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
+legend(290, 67, legend = c("Historic", "Modern"), col = c("red", "royalblue"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Baltimore oriole")
+dev.off()
+```
 
 
 ### Extract black patches
-```{r, message = FALSE, results = FALSE}
-allspec.blk <- subset(allspec.sm, "blk") #n = 77
+Repeat steps above 
+
+```{r Extract black patches, message = FALSE, results = FALSE}
+allspec.blk <- subset(allspec.sm, "blk")
 
 # average 3 measurements
 allspec.blk.avg <- aggspec(allspec.blk, by = 2, FUN = mean, trim = FALSE) 
@@ -272,3 +295,5 @@ allsum.blk$ID <- gsub("UWBM", "UWBM.BU", allsum.blk$ID)
 alldat.blk <- allsum.blk %>%
   left_join(att, by = c("ID" = "ID"), keep = TRUE)
 ```
+
+
