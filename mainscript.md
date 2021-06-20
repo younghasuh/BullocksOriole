@@ -466,7 +466,7 @@ Normality
 qqPlot(alldat.orn$B1)
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](mainscript_files/figure-gfm/qqPlots-1.png)<!-- -->
 
     ## [1] 94 95
 
@@ -474,7 +474,7 @@ qqPlot(alldat.orn$B1)
 qqPlot(alldat.orn$B2)
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+![](mainscript_files/figure-gfm/qqPlots-2.png)<!-- -->
 
     ## [1] 94 95
 
@@ -482,7 +482,7 @@ qqPlot(alldat.orn$B2)
 qqPlot(alldat.orn$S9)
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-1-3.png)<!-- -->
+![](mainscript_files/figure-gfm/qqPlots-3.png)<!-- -->
 
     ## [1] 116  98
 
@@ -490,7 +490,7 @@ qqPlot(alldat.orn$S9)
 qqPlot(alldat.orn$H3)
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-1-4.png)<!-- -->
+![](mainscript_files/figure-gfm/qqPlots-4.png)<!-- -->
 
     ## [1] 50 43
 
@@ -499,7 +499,7 @@ qqPlot(alldat.orn$H3)
 qqPlot(alldat.blk$B1)
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-1-5.png)<!-- -->
+![](mainscript_files/figure-gfm/qqPlots-5.png)<!-- -->
 
     ## [1] 37 27
 
@@ -515,8 +515,340 @@ To test for specimen fauxing, look at colorimetric measures over time.
 
 Check brightness, carotenoid chroma, hue
 
+1)  Brightness
+
+<!-- end list -->
+
 ``` r
+# Both species
+lm_orn_both_b1 <- lm(B1 ~ date, data=alldat.orn)
+summary(lm_orn_both_b1)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = B1 ~ date, data = alldat.orn)
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2208.7  -423.0   111.5   558.7  1823.2 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 9.786e+03  7.279e+01  134.45   <2e-16 ***
+    ## date        2.864e-03  5.620e-03    0.51    0.611    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 763.6 on 117 degrees of freedom
+    ## Multiple R-squared:  0.002214,   Adjusted R-squared:  -0.006314 
+    ## F-statistic: 0.2596 on 1 and 117 DF,  p-value: 0.6113
+
+``` r
+# Bullock's
+lm_orn_BU_b1 <- lm(B1 ~ date, data=alldat.orn[which(alldat.orn$sp == "Bull"),])
+summary(lm_orn_BU_b1)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = B1 ~ date, data = alldat.orn[which(alldat.orn$sp == 
+    ##     "Bull"), ])
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2057.20  -515.73    87.37   565.12  1945.41 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 9.676e+03  9.139e+01 105.874   <2e-16 ***
+    ## date        5.624e-03  6.931e-03   0.812     0.42    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 804.4 on 78 degrees of freedom
+    ## Multiple R-squared:  0.008372,   Adjusted R-squared:  -0.004341 
+    ## F-statistic: 0.6585 on 1 and 78 DF,  p-value: 0.4195
+
+``` r
+# Baltimore
+lm_orn_BA_b1 <- lm(B1 ~ date, data=alldat.orn[which(alldat.orn$sp == "Balt"),])
+summary(lm_orn_BA_b1)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = B1 ~ date, data = alldat.orn[which(alldat.orn$sp == 
+    ##     "Balt"), ])
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1399.98  -304.34    99.23   363.49  1162.44 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  1.009e+04  1.126e+02   89.56   <2e-16 ***
+    ## date        -1.176e-02  9.044e-03   -1.30    0.201    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 615.6 on 37 degrees of freedom
+    ## Multiple R-squared:  0.04371,    Adjusted R-squared:  0.01786 
+    ## F-statistic: 1.691 on 1 and 37 DF,  p-value: 0.2015
+
+``` r
+# Plot both
 ggplot(alldat.orn, aes(x=date, y=B1, shape = sp, color=sp)) +
+  geom_point(size=2) +
+  stat_smooth(method = lm, aes(fill=sp), se = T) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Total brightness (B1)", x= "Collection date")  +
+  scale_color_manual(values= pal1, labels = c("Baltimore", "Bullock's")) +
+  scale_fill_manual(values= pal1)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](mainscript_files/figure-gfm/Orange%20-%20brightness%20x%20date-1.png)<!-- -->
+
+2)  Carotenoid chroma
+
+<!-- end list -->
+
+``` r
+# Both species
+lm_orn_both_s9 <- lm(S9 ~ date, data=alldat.orn)
+summary(lm_orn_both_s9)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = S9 ~ date, data = alldat.orn)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.050172 -0.005326  0.002971  0.009081  0.023683 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 9.354e-01  1.319e-03 709.333   <2e-16 ***
+    ## date        2.244e-07  1.018e-07   2.204   0.0295 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01383 on 117 degrees of freedom
+    ## Multiple R-squared:  0.03987,    Adjusted R-squared:  0.03166 
+    ## F-statistic: 4.858 on 1 and 117 DF,  p-value: 0.02947
+
+``` r
+# Bullock's
+lm_orn_BU_s9 <- lm(S9 ~ date, data=alldat.orn[which(alldat.orn$sp == "Bull"),])
+summary(lm_orn_BU_s9)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = S9 ~ date, data = alldat.orn[which(alldat.orn$sp == 
+    ##     "Bull"), ])
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.048236 -0.008618  0.003119  0.010649  0.025134 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 9.340e-01  1.647e-03 566.984   <2e-16 ***
+    ## date        1.834e-07  1.249e-07   1.468    0.146    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.0145 on 78 degrees of freedom
+    ## Multiple R-squared:  0.0269, Adjusted R-squared:  0.01442 
+    ## F-statistic: 2.156 on 1 and 78 DF,  p-value: 0.146
+
+``` r
+# Baltimore
+lm_orn_BA_s9 <- lm(S9 ~ date, data=alldat.orn[which(alldat.orn$sp == "Balt"),])
+summary(lm_orn_BA_s9)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = S9 ~ date, data = alldat.orn[which(alldat.orn$sp == 
+    ##     "Balt"), ])
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.040891 -0.004822  0.002226  0.006510  0.020737 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 9.385e-01  2.208e-03 425.044   <2e-16 ***
+    ## date        2.455e-07  1.773e-07   1.385    0.174    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01207 on 37 degrees of freedom
+    ## Multiple R-squared:  0.04929,    Adjusted R-squared:  0.02359 
+    ## F-statistic: 1.918 on 1 and 37 DF,  p-value: 0.1743
+
+``` r
+# Plot both
+ggplot(alldat.orn, aes(x=date, y=S9, shape = sp, color=sp)) +
+  geom_point(size=2) +
+  stat_smooth(method = lm, aes(fill=sp), se = T) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x= "Collection date")  +
+  scale_color_manual(values= pal1, labels = c("Baltimore", "Bullock's")) +
+  scale_fill_manual(values= pal1)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](mainscript_files/figure-gfm/Orange%20-%20chroma%20x%20date-1.png)<!-- -->
+
+3)  Hue
+
+<!-- end list -->
+
+``` r
+# Both species
+lm_orn_both_h3 <- lm(H3 ~ date, data=alldat.orn)
+summary(lm_orn_both_h3)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = H3 ~ date, data = alldat.orn)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -18.3067  -3.7834  -0.3465   5.2359  14.6545 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 5.519e+02  6.902e-01 799.599   <2e-16 ***
+    ## date        1.104e-04  5.329e-05   2.072   0.0405 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 7.24 on 117 degrees of freedom
+    ## Multiple R-squared:  0.03538,    Adjusted R-squared:  0.02713 
+    ## F-statistic: 4.291 on 1 and 117 DF,  p-value: 0.04051
+
+``` r
+# Bullock's
+lm_orn_BU_h3 <- lm(H3 ~ date, data=alldat.orn[which(alldat.orn$sp == "Bull"),])
+summary(lm_orn_BU_h3)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = H3 ~ date, data = alldat.orn[which(alldat.orn$sp == 
+    ##     "Bull"), ])
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -16.5275  -6.3942  -0.4725   6.4996  14.2262 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 5.504e+02  8.871e-01 620.411   <2e-16 ***
+    ## date        1.747e-04  6.728e-05   2.597   0.0112 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 7.808 on 78 degrees of freedom
+    ## Multiple R-squared:  0.07961,    Adjusted R-squared:  0.06781 
+    ## F-statistic: 6.746 on 1 and 78 DF,  p-value: 0.01122
+
+``` r
+# Baltimore
+lm_orn_BA_h3 <- lm(H3 ~ date, data=alldat.orn[which(alldat.orn$sp == "Balt"),])
+summary(lm_orn_BA_h3)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = H3 ~ date, data = alldat.orn[which(alldat.orn$sp == 
+    ##     "Balt"), ])
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -7.4545 -2.4008 -0.4553  2.0983  9.5450 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  5.562e+02  7.142e-01 778.706   <2e-16 ***
+    ## date        -1.600e-04  5.735e-05  -2.789   0.0083 ** 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 3.904 on 37 degrees of freedom
+    ## Multiple R-squared:  0.1737, Adjusted R-squared:  0.1514 
+    ## F-statistic:  7.78 on 1 and 37 DF,  p-value: 0.008299
+
+``` r
+# Plot both
+ggplot(alldat.orn, aes(x=date, y=H3, shape = sp, color=sp)) +
+  geom_point(size=2) +
+  stat_smooth(method = lm, aes(fill=sp), se = T) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x= "Collection date")  +
+  scale_color_manual(values= pal1, labels = c("Baltimore", "Bullock's")) +
+  scale_fill_manual(values= pal1)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](mainscript_files/figure-gfm/Orange%20-%20hue%20x%20date-1.png)<!-- -->
+
+### 2\. Black patches over time
+
+Check brightness
+
+``` r
+lm_black <- lm(B1 ~ date, data=alldat.blk)
+summary(lm_black)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = B1 ~ date, data = alldat.blk)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1111.32  -276.65   -81.05   221.07  1402.48 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 1.914e+03  4.366e+01  43.837  < 2e-16 ***
+    ## date        1.109e-02  3.371e-03   3.288  0.00133 ** 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 458 on 117 degrees of freedom
+    ## Multiple R-squared:  0.0846, Adjusted R-squared:  0.07678 
+    ## F-statistic: 10.81 on 1 and 117 DF,  p-value: 0.001332
+
+``` r
+# plot
+ggplot(alldat.blk, aes(x=date, y=B1, shape = sp, color=sp)) +
   geom_point(size=2) +
   stat_smooth(method = lm, aes(fill=sp), se = T) +
   theme_classic() +
@@ -532,22 +864,123 @@ ggplot(alldat.orn, aes(x=date, y=B1, shape = sp, color=sp)) +
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](mainscript_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
-
-### 2\. Black patches over time
-
-Check brightness
-
-``` r
-plot(B1~date, data=alldat.blk, ylab = "Total brightness (B1)", xlab = "Specimen age", col = "#595959", main = "Black patches") 
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](mainscript_files/figure-gfm/Black%20-%20brightness%20x%20date-1.png)<!-- -->
 
 <br>
 
 ## H2. Have landuse changes affected Bullock’s orioles?
 
+Compare reference vs. hybrid zone
+
+``` r
+# Set a new variable indicating hybrid zone or outside
+alldat.orn$loc <- ifelse(alldat.orn$cat == "Bull_ref", "outside", "hybridzone") 
+
+# Separate Bullock's
+bullocks <- alldat.orn[which(alldat.orn$sp == "Bull"),]
+
+# List for comparisons
+bucomp <- list(c("Bull_ref", "Bull_hist"), c("Bull_hist", "Bull_mod"), c("Bull_ref", "Bull_mod"))
+```
+
+1.  Brightness
+
+<!-- end list -->
+
+``` r
+# Boxplots
+ggplot(bullocks, aes(x=cat, y=B1)) +
+  stat_boxplot(aes(x=cat, y=B1), geom="errorbar", position = position_dodge(width=.75), width=.5) +
+  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = bucomp, label.y = c(11900, 12200, 12500), method = "t.test", label = "p.signif", size = 6) +
+  theme(axis.text=element_text(size=16, color="black"),
+        axis.title=element_text(size=18,face="bold",color="black"),
+        axis.text.x=element_text(size=16, color="black"), 
+        axis.text.y=element_text(size=16, color="black"),
+        legend.text = element_text(size=16, color="black"),
+        legend.title = element_text(size=16, color="black", face="bold"))+
+  labs(y = "Total brightness (B1)") +
+  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
+  ylim(7500,12500)
+```
+
+![](mainscript_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
+2.  Chroma
+
+3.  Hue
+
 <br>
 
 ## H3. Are color changes only in the hybrid zone?
+
+1.  Brightness
+
+<!-- end list -->
+
+``` r
+# Regression over time 
+ggplot(bullocks, aes(x=date, y=B1, shape = loc, color=loc)) +
+  geom_point(size=2) +
+  stat_smooth(method = lm, aes(fill=loc), se = T) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Total brightness (B1)", x= "Collection date") +
+  scale_color_manual(values= pal1) +
+  scale_fill_manual(values= pal1)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](mainscript_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+2.  Chroma
+
+<!-- end list -->
+
+``` r
+ggplot(bullocks, aes(x=date, y=S9, shape = loc, color=loc)) +
+  geom_point(size=2) +
+  stat_smooth(method = lm, aes(fill=loc), se = T) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x= "Collection date") +
+  scale_color_manual(values= pal1) +
+  scale_fill_manual(values= pal1)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](mainscript_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+3.  Hue
+
+<!-- end list -->
+
+``` r
+ggplot(bullocks, aes(x=date, y=H3, shape = loc, color=loc)) +
+  geom_point(size=2) +
+  stat_smooth(method = lm, aes(fill=loc), se = T) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Hue (H3)", x= "Collection date") +
+  scale_color_manual(values= pal1) +
+  scale_fill_manual(values= pal1)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](mainscript_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
