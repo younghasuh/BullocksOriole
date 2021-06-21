@@ -51,7 +51,7 @@ mytheme <- theme(
   legend.text = element_text(size=16, color="black"),
   legend.title = element_text(size=16, color="black", face="bold"))
 
-pal1 <- c("#58508d", "#ffa600")
+pal1 <- c("#ffa600", "#58508d")
 ```
 
 # Import data
@@ -236,6 +236,9 @@ alldat.orn <- allsum.orn %>%
 
 # Make just a species category
 alldat.orn$sp <- gsub("\\_.*", "", alldat.orn$cat)
+
+# Rename species category for future plotting
+alldat.orn$spc <- factor(alldat.orn$sp, levels = c("Bull", "Balt"), labels = c("Bullock's", "Baltimore"))
 ```
 
 #### Spectra split by species 
@@ -300,6 +303,9 @@ alldat.blk <- allsum.blk %>%
 
 # Make just a species category
 alldat.blk$sp <- gsub("\\_.*", "", alldat.blk$cat)
+
+# Rename species category for future plotting
+alldat.blk$spc <- factor(alldat.blk$sp, levels = c("Bull", "Balt"), labels = c("Bullock's", "Baltimore"))
 ```
 
 
@@ -318,16 +324,16 @@ List of variables of interest (from Pavo package; references available there)
 Orange patches
 ```{r Boxplot across specimens - orange}
 dat <- alldat.orn
-plot(B1~cat, data=dat, ylab = "Total brightness (B1)", xlab = "Specimen category")
-plot(B2~cat, data=dat, ylab = "Mean brightness (B2)", xlab = "Specimen category") # same as above, just different y axis
-plot(S9~cat, data=dat, ylab = "Carotenoid chroma (S9)", xlab = "Specimen category")
-plot(H3~cat, data=dat, ylab = "Hue (H3)", xlab = "Specimen category")
+plot(B1 ~ cat, data = dat, ylab = "Total brightness (B1)", xlab = "Specimen category")
+plot(B2 ~ cat, data = dat, ylab = "Mean brightness (B2)", xlab = "Specimen category") # same as above, just different y axis
+plot(S9 ~ cat, data = dat, ylab = "Carotenoid chroma (S9)", xlab = "Specimen category")
+plot(H3 ~ cat, data = dat, ylab = "Hue (H3)", xlab = "Specimen category")
 ```
 
 Black patchess 
 ```{r Boxplot across specimens - black}
 dat <- alldat.blk
-plot(B1~cat, data=dat, ylab = "Total brightness (B1)", xlab = "Specimen category")
+plot(B1 ~ cat, data = dat, ylab = "Total brightness (B1)", xlab = "Specimen category")
 ```
 
 ### Check data 
@@ -367,113 +373,113 @@ To test for specimen fauxing, look at colorimetric measures over time.
 Check brightness, carotenoid chroma, hue
 
 1) Brightness
-```{r Orange - brightness x date}
+```{r Orange - brightness x date, message = FALSE}
 # Both species
-lm_orn_both_b1 <- lm(B1 ~ date, data=alldat.orn)
+lm_orn_both_b1 <- lm(B1 ~ date, data = alldat.orn)
 summary(lm_orn_both_b1)
 
 # Bullock's
-lm_orn_BU_b1 <- lm(B1 ~ date, data=alldat.orn[which(alldat.orn$sp == "Bull"),])
+lm_orn_BU_b1 <- lm(B1 ~ date, data = alldat.orn[which(alldat.orn$sp == "Bull"),])
 summary(lm_orn_BU_b1)
 
 # Baltimore
-lm_orn_BA_b1 <- lm(B1 ~ date, data=alldat.orn[which(alldat.orn$sp == "Balt"),])
+lm_orn_BA_b1 <- lm(B1 ~ date, data = alldat.orn[which(alldat.orn$sp == "Balt"),])
 summary(lm_orn_BA_b1)
 
 # Plot both
-ggplot(alldat.orn, aes(x=date, y=B1, shape = sp, color=sp)) +
-  geom_point(size=2) +
-  stat_smooth(method = lm, aes(fill=sp), se = T) +
+ggplot(alldat.orn, aes(x = date, y = B1, shape = spc, color = spc)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, aes(fill = spc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+  stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
                                             stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Total brightness (B1)", x= "Collection date")  +
-  scale_color_manual(values= pal1, labels = c("Baltimore", "Bullock's")) +
-  scale_fill_manual(values= pal1)
+  labs(title = "Orange patches only", y = "Total brightness (B1)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
 ```
 
 2) Carotenoid chroma 
-```{r Orange - chroma x date}
+```{r Orange - chroma x date, message = FALSE}
 # Both species
-lm_orn_both_s9 <- lm(S9 ~ date, data=alldat.orn)
+lm_orn_both_s9 <- lm(S9 ~ date, data = alldat.orn)
 summary(lm_orn_both_s9)
 
 # Bullock's
-lm_orn_BU_s9 <- lm(S9 ~ date, data=alldat.orn[which(alldat.orn$sp == "Bull"),])
+lm_orn_BU_s9 <- lm(S9 ~ date, data = alldat.orn[which(alldat.orn$sp == "Bull"),])
 summary(lm_orn_BU_s9)
 
 # Baltimore
-lm_orn_BA_s9 <- lm(S9 ~ date, data=alldat.orn[which(alldat.orn$sp == "Balt"),])
+lm_orn_BA_s9 <- lm(S9 ~ date, data = alldat.orn[which(alldat.orn$sp == "Balt"),])
 summary(lm_orn_BA_s9)
 
 # Plot both
-ggplot(alldat.orn, aes(x=date, y=S9, shape = sp, color=sp)) +
-  geom_point(size=2) +
-  stat_smooth(method = lm, aes(fill=sp), se = T) +
+ggplot(alldat.orn, aes(x = date, y = S9, shape = spc, color = spc)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, aes(fill = spc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+  stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
                                             stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x= "Collection date")  +
-  scale_color_manual(values= pal1, labels = c("Baltimore", "Bullock's")) +
-  scale_fill_manual(values= pal1)
+  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
 ```
 
 3) Hue 
-```{r Orange - hue x date}
+```{r Orange - hue x date, message = FALSE}
 # Both species
-lm_orn_both_h3 <- lm(H3 ~ date, data=alldat.orn)
+lm_orn_both_h3 <- lm(H3 ~ date, data = alldat.orn)
 summary(lm_orn_both_h3)
 
 # Bullock's
-lm_orn_BU_h3 <- lm(H3 ~ date, data=alldat.orn[which(alldat.orn$sp == "Bull"),])
+lm_orn_BU_h3 <- lm(H3 ~ date, data = alldat.orn[which(alldat.orn$sp == "Bull"),])
 summary(lm_orn_BU_h3)
 
 # Baltimore
-lm_orn_BA_h3 <- lm(H3 ~ date, data=alldat.orn[which(alldat.orn$sp == "Balt"),])
+lm_orn_BA_h3 <- lm(H3 ~ date, data = alldat.orn[which(alldat.orn$sp == "Balt"),])
 summary(lm_orn_BA_h3)
 
 # Plot both
-ggplot(alldat.orn, aes(x=date, y=H3, shape = sp, color=sp)) +
-  geom_point(size=2) +
-  stat_smooth(method = lm, aes(fill=sp), se = T) +
+ggplot(alldat.orn, aes(x = date, y = H3, shape = spc, color = spc)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, aes(fill = spc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+  stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
                                             stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x= "Collection date")  +
-  scale_color_manual(values= pal1, labels = c("Baltimore", "Bullock's")) +
-  scale_fill_manual(values= pal1)
+  labs(title = "Orange patches only", y = "Hue (H3)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
 ```
 
 ### 2. Black patches over time
 
 Check brightness
 
-```{r Black - brightness x date}
-lm_black <- lm(B1 ~ date, data=alldat.blk)
+```{r Black - brightness x date, message = FALSE}
+lm_black <- lm(B1 ~ date, data = alldat.blk)
 summary(lm_black)
 
 # plot
-ggplot(alldat.blk, aes(x=date, y=B1, shape = sp, color=sp)) +
-  geom_point(size=2) +
-  stat_smooth(method = lm, aes(fill=sp), se = T) +
+ggplot(alldat.blk, aes(x = date, y = B1, shape = spc, color = spc)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, aes(fill = spc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+  stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.2f',
-                                            stat(..r.squared..),stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Total brightness (B1)", x= "Collection date")  +
-  scale_color_manual(values= pal1, labels = c("Baltimore", "Bullock's")) +
-  scale_fill_manual(values= pal1)
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Black patches only", y = "Brightness (B1)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
 ```
 
 
@@ -485,7 +491,7 @@ Compare reference vs. hybrid zone
 
 ```{r H2. Reference vs hybrid zone}
 # Set a new variable indicating hybrid zone or outside
-alldat.orn$loc <- ifelse(alldat.orn$cat == "Bull_ref", "outside", "hybridzone") 
+alldat.orn$loc <- ifelse(alldat.orn$cat == "Bull_ref", "Outside", "Hybrid zone") 
 
 # Separate Bullock's
 bullocks <- alldat.orn[which(alldat.orn$sp == "Bull"),]
@@ -496,47 +502,47 @@ bucomp <- list(c("Bull_ref", "Bull_hist"), c("Bull_hist", "Bull_mod"), c("Bull_r
 
 
 1. Brightness
-```{r compare across bullocks groups - brightness}
+```{r compare across bullocks groups - brightness, message = FALSE}
 # Boxplots
-ggplot(bullocks, aes(x=cat, y=B1)) +
-  stat_boxplot(aes(x=cat, y=B1), geom="errorbar", position = position_dodge(width=.75), width=.5) +
-  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
+ggplot(bullocks, aes(x = cat, y = B1)) +
+  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
   theme_classic()+ 
   stat_compare_means(comparisons = bucomp, label.y = c(11900, 12200, 12500), method = "t.test", label = "p.signif", size = 6) + 
   mytheme +
   labs(y = "Total brightness (B1)") +
-  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
-  ylim(7500,12500)
+  scale_x_discrete(name = "Bullock's oriole", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference", "Historic", "Modern")) +
+  ylim(7500,12510)
 ```
 
 2. Chroma
-```{r compare across bullocks groups - chroma}
+```{r compare across bullocks groups - chroma, message = FALSE}
 # Boxplots
-ggplot(bullocks, aes(x=cat, y=S9)) +
-  stat_boxplot(aes(x=cat, y=S9), geom="errorbar", position = position_dodge(width=.75), width=.5) +
-  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
+ggplot(bullocks, aes(x = cat, y = S9)) +
+  stat_boxplot(aes(x = cat, y = S9), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
   theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(0.962, 0.966, 0.971), method = "t.test", label = "p.signif", size = 6) + 
+  stat_compare_means(comparisons = bucomp, label.y = c(0.962, 0.966, 0.972), method = "t.test", label = "p.signif", size = 6) + 
   mytheme +
   labs(y = "Caronetoid chroma (S9)") +
-  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
-  ylim(0.90,0.971)
+  scale_x_discrete(name = "Bullock's oriole", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference","Historic", "Modern")) +
+  ylim(0.90,0.973)
 ```
 
 
 3. Hue
 
-```{r compare across bullocks groups - hue}
+```{r compare across bullocks groups - hue, message = FALSE}
 # Boxplots
-ggplot(bullocks, aes(x=cat, y=H3)) +
-  stat_boxplot(aes(x=cat, y=H3), geom="errorbar", position = position_dodge(width=.75), width=.5) +
-  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
+ggplot(bullocks, aes(x = cat, y = H3)) +
+  stat_boxplot(aes(x = cat, y = H3), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
   theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(567, 569, 572), method = "t.test", label = "p.signif", size = 6) + 
+  stat_compare_means(comparisons = bucomp, label.y = c(570, 568, 572), method = "t.test", label = "p.signif", size = 6) + 
   mytheme +
   labs(y = "Hue (H3)") +
-  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
-  ylim(537,575)
+  scale_x_discrete(name = "Bullock's oriole", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference","Historic", "Modern")) +
+  ylim(537,574)
 ```
 
 
@@ -546,51 +552,51 @@ ggplot(bullocks, aes(x=cat, y=H3)) +
 ## H3. Are color changes only in the hybrid zone? 
 
 1. Brightness
-```{r Compare across bullocks hybrid zone - brightness}
+```{r Compare across bullocks hybrid zone - brightness, message = FALSE}
 # Regression over time 
-ggplot(bullocks, aes(x=date, y=B1, shape = loc, color=loc)) +
-  geom_point(size=2) +
-  stat_smooth(method = lm, aes(fill=loc), se = T) +
+ggplot(bullocks, aes(x = date, y = B1, shape = loc, color = loc)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+  stat_fit_glance(method = "lm", label.x ="right", label.y ="bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
                                             stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Total brightness (B1)", x= "Collection date") +
-  scale_color_manual(values= pal1) +
-  scale_fill_manual(values= pal1)
+  labs(title = "Orange patches only", y = "Total brightness (B1)", x= "Collection date", color = "Location", fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
 ```
 
 2. Chroma
-```{r Compare across bullocks hybrid zone - chroma}
-ggplot(bullocks, aes(x=date, y=S9, shape = loc, color=loc)) +
-  geom_point(size=2) +
-  stat_smooth(method = lm, aes(fill=loc), se = T) +
+```{r Compare across bullocks hybrid zone - chroma, message = FALSE}
+ggplot(bullocks, aes(x = date, y = S9, shape = loc, color = loc)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
   stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
                                             stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x= "Collection date") +
-  scale_color_manual(values= pal1) +
-  scale_fill_manual(values= pal1)
+  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x = "Collection date", color = "Location", fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
 ```
 
 
 3. Hue
-```{r Compare across bullocks hybrid zone - hue}
-ggplot(bullocks, aes(x=date, y=H3, shape = loc, color=loc)) +
-  geom_point(size=2) +
-  stat_smooth(method = lm, aes(fill=loc), se = T) +
+```{r Compare across bullocks hybrid zone - hue, message = FALSE}
+ggplot(bullocks, aes(x = date, y = H3, shape = loc, color = loc)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+  stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
                                             stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Hue (H3)", x= "Collection date") +
-  scale_color_manual(values= pal1) +
-  scale_fill_manual(values= pal1)
+  labs(title = "Orange patches only", y = "Hue (H3)", x = "Collection date", color = "Location", fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
 ```
