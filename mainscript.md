@@ -893,23 +893,64 @@ ggplot(bullocks, aes(x=cat, y=B1)) +
   stat_boxplot(aes(x=cat, y=B1), geom="errorbar", position = position_dodge(width=.75), width=.5) +
   geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
   theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(11900, 12200, 12500), method = "t.test", label = "p.signif", size = 6) +
-  theme(axis.text=element_text(size=16, color="black"),
-        axis.title=element_text(size=18,face="bold",color="black"),
-        axis.text.x=element_text(size=16, color="black"), 
-        axis.text.y=element_text(size=16, color="black"),
-        legend.text = element_text(size=16, color="black"),
-        legend.title = element_text(size=16, color="black", face="bold"))+
+  stat_compare_means(comparisons = bucomp, label.y = c(11900, 12200, 12500), method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
   labs(y = "Total brightness (B1)") +
   scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
   ylim(7500,12500)
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](mainscript_files/figure-gfm/compare%20across%20bullocks%20groups%20-%20brightness-1.png)<!-- -->
 
 2.  Chroma
 
+<!-- end list -->
+
+``` r
+# Boxplots
+ggplot(bullocks, aes(x=cat, y=S9)) +
+  stat_boxplot(aes(x=cat, y=S9), geom="errorbar", position = position_dodge(width=.75), width=.5) +
+  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = bucomp, label.y = c(0.962, 0.966, 0.971), method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
+  labs(y = "Caronetoid chroma (S9)") +
+  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
+  ylim(0.90,0.971)
+```
+
+    ## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
+    
+    ## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
+
+    ## Warning: Removed 2 rows containing non-finite values (stat_signif).
+
+![](mainscript_files/figure-gfm/compare%20across%20bullocks%20groups%20-%20chroma-1.png)<!-- -->
+
 3.  Hue
+
+<!-- end list -->
+
+``` r
+# Boxplots
+ggplot(bullocks, aes(x=cat, y=H3)) +
+  stat_boxplot(aes(x=cat, y=H3), geom="errorbar", position = position_dodge(width=.75), width=.5) +
+  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = bucomp, label.y = c(567, 569, 572), method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
+  labs(y = "Hue (H3)") +
+  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
+  ylim(537,575)
+```
+
+    ## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
+    
+    ## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
+
+    ## Warning: Removed 2 rows containing non-finite values (stat_signif).
+
+![](mainscript_files/figure-gfm/compare%20across%20bullocks%20groups%20-%20hue-1.png)<!-- -->
 
 <br>
 
@@ -937,7 +978,7 @@ ggplot(bullocks, aes(x=date, y=B1, shape = loc, color=loc)) +
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](mainscript_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](mainscript_files/figure-gfm/Compare%20across%20bullocks%20hybrid%20zone%20-%20brightness-1.png)<!-- -->
 
 2.  Chroma
 
@@ -960,7 +1001,7 @@ ggplot(bullocks, aes(x=date, y=S9, shape = loc, color=loc)) +
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](mainscript_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](mainscript_files/figure-gfm/Compare%20across%20bullocks%20hybrid%20zone%20-%20chroma-1.png)<!-- -->
 
 3.  Hue
 
@@ -983,4 +1024,4 @@ ggplot(bullocks, aes(x=date, y=H3, shape = loc, color=loc)) +
 
     ## `geom_smooth()` using formula 'y ~ x'
 
-![](mainscript_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](mainscript_files/figure-gfm/Compare%20across%20bullocks%20hybrid%20zone%20-%20hue-1.png)<!-- -->

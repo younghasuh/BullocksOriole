@@ -496,29 +496,48 @@ bucomp <- list(c("Bull_ref", "Bull_hist"), c("Bull_hist", "Bull_mod"), c("Bull_r
 
 
 1. Brightness
-```{r}
+```{r compare across bullocks groups - brightness}
 # Boxplots
 ggplot(bullocks, aes(x=cat, y=B1)) +
   stat_boxplot(aes(x=cat, y=B1), geom="errorbar", position = position_dodge(width=.75), width=.5) +
   geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
   theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(11900, 12200, 12500), method = "t.test", label = "p.signif", size = 6) +
-  theme(axis.text=element_text(size=16, color="black"),
-        axis.title=element_text(size=18,face="bold",color="black"),
-        axis.text.x=element_text(size=16, color="black"), 
-        axis.text.y=element_text(size=16, color="black"),
-        legend.text = element_text(size=16, color="black"),
-        legend.title = element_text(size=16, color="black", face="bold"))+
+  stat_compare_means(comparisons = bucomp, label.y = c(11900, 12200, 12500), method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
   labs(y = "Total brightness (B1)") +
   scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
   ylim(7500,12500)
 ```
 
 2. Chroma
+```{r compare across bullocks groups - chroma}
+# Boxplots
+ggplot(bullocks, aes(x=cat, y=S9)) +
+  stat_boxplot(aes(x=cat, y=S9), geom="errorbar", position = position_dodge(width=.75), width=.5) +
+  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = bucomp, label.y = c(0.962, 0.966, 0.971), method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
+  labs(y = "Caronetoid chroma (S9)") +
+  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
+  ylim(0.90,0.971)
+```
+
 
 3. Hue
 
-
+```{r compare across bullocks groups - hue}
+# Boxplots
+ggplot(bullocks, aes(x=cat, y=H3)) +
+  stat_boxplot(aes(x=cat, y=H3), geom="errorbar", position = position_dodge(width=.75), width=.5) +
+  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = bucomp, label.y = c(567, 569, 572), method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
+  labs(y = "Hue (H3)") +
+  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist", "Bull_mod"), labels=c("Reference","Historic", "Modern")) +
+  ylim(537,575)
+```
 
 
 
@@ -527,7 +546,7 @@ ggplot(bullocks, aes(x=cat, y=B1)) +
 ## H3. Are color changes only in the hybrid zone? 
 
 1. Brightness
-```{r}
+```{r Compare across bullocks hybrid zone - brightness}
 # Regression over time 
 ggplot(bullocks, aes(x=date, y=B1, shape = loc, color=loc)) +
   geom_point(size=2) +
@@ -544,7 +563,7 @@ ggplot(bullocks, aes(x=date, y=B1, shape = loc, color=loc)) +
 ```
 
 2. Chroma
-```{r}
+```{r Compare across bullocks hybrid zone - chroma}
 ggplot(bullocks, aes(x=date, y=S9, shape = loc, color=loc)) +
   geom_point(size=2) +
   stat_smooth(method = lm, aes(fill=loc), se = T) +
@@ -561,7 +580,7 @@ ggplot(bullocks, aes(x=date, y=S9, shape = loc, color=loc)) +
 
 
 3. Hue
-```{r}
+```{r Compare across bullocks hybrid zone - hue}
 ggplot(bullocks, aes(x=date, y=H3, shape = loc, color=loc)) +
   geom_point(size=2) +
   stat_smooth(method = lm, aes(fill=loc), se = T) +
