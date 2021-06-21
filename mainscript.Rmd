@@ -15,13 +15,13 @@ The following analyses is conducted on spectra data for 119 specimens. Sample si
 | Historic | Modern | Reference | Historic | Modern |
 | 20 | 20 | 40 | 20 | 19 |
 
-Bullock's reference specimens come from the Museum of Vertebrate Zoology (MVZ; n = 20) and the University of Washington Burke Museum (UWBM; n = 20).  
+Bullock's reference specimens come from the Museum of Vertebrate Zoology (MVZ; n = 20) and the University of Washington Burke Museum (UWBM; n = 20), all from CA, NE, WA, OR, AZ.  
 
 **Set up**: integration time, 100 ms; 10 readings averaged per recording; boxcar width 10
 
 Each specimen has 5 patches measured (2 black 3 orange) and each patch is measured 3 times; i.e. 15 measurements per specimen. 
 
-![**Fig 1**. Patches measured on specimens.](pics.png){width=50%}
+![**Fig 1**. Patches measured on specimens.](pics.png){width=30%}
 
 <br>
 

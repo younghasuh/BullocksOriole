@@ -37,7 +37,7 @@ Sample sizes for each specimen category compose of the following:
 
 Bullock’s reference specimens come from the Museum of Vertebrate Zoology
 (MVZ; n = 20) and the University of Washington Burke Museum (UWBM; n =
-20).
+20), all from CA, NE, WA, OR, AZ.
 
 **Set up**: integration time, 100 ms; 10 readings averaged per
 recording; boxcar width 10
