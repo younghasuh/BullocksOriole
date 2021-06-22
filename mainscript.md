@@ -100,6 +100,8 @@ mytheme <- theme(
   legend.title = element_text(size=16, color="black", face="bold"))
 
 pal1 <- c("#ffa600", "#58508d")
+pal.bu <- c("#ffc966", "#cc8400")
+pal.ba <- c("#9a96ba", "#3d3862")
 ```
 
 # Import data
@@ -1466,12 +1468,7 @@ ggplot(tobu, aes(x=cat, y=r.vec)) +
   geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
   theme_classic()+ 
   stat_compare_means(comparisons = bucomp, method = "t.test", label.y = c(0.41, 0.42, 0.43),label = "p.signif", size = 6) +
-  theme(axis.text=element_text(size=16, color="black"),
-        axis.title=element_text(size=18,face="bold",color="black"),
-        axis.text.x=element_text(size=16, color="black"), 
-        axis.text.y=element_text(size=16, color="black"),
-        legend.text = element_text(size=16, color="black"),
-        legend.title = element_text(size=16, color="black", face="bold"))+
+  mytheme +
   labs(y = "Saturation") +
   scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist","Bull_mod"), labels=c("Reference","Historic", "Modern"))
 ```
@@ -1568,18 +1565,16 @@ summary(pca.bamh) # 71.7% of variation
 bamh <- as.character(colnames(baltmodhist))
 bamh <- gsub("\\..*", "", bamh) # remove everything after "."
 bamh <- bamh[-1]
-sb.bamh <- cbind(spec.bin.bamh, bamh) 
+bamh1 <- ifelse(bamh == "Balt_hist", "Historic", "Modern") 
+sb.bamh <- cbind(spec.bin.bamh, bamh1) 
 
-autoplot(pca.bamh, data=sb.bamh, colour = "bamh", frame=TRUE, frame.type = "norm", legendlabs = c("Baltimore historic", "Baltimore modern")) + 
+pca.ba <- autoplot(pca.bamh, data=sb.bamh, colour = "bamh1", shape = "bamh1", frame=TRUE, frame.type = "norm", size = 2) + 
   theme_classic() +
-  mytheme+
-  labs(fill="Specimen type", color="Specimen type")
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
-
-``` r
-ggsave("pca_baltimore.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
+  mytheme +
+  scale_color_manual(values = pal.ba) +
+  scale_fill_manual(values = pal.ba) +
+  labs(fill="Specimen type", color="Specimen type", shape = "Specimen type")
+ggsave("pca_baltimore_mod_hist.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
 ```
 
 ### Within Bullock’s, historic vs modern
@@ -1598,18 +1593,48 @@ summary(pca.bumh) # 55.5% of variation
 bumh <- as.character(colnames(bullmodhist))
 bumh <- gsub("\\..*", "", bumh) # remove everything after "."
 bumh <- bumh[-1]
-sb.bumh <- cbind(spec.bin.bumh, bumh) 
+bumh1 <- ifelse(bumh == "Bull_hist", "Historic", "Modern") 
+sb.bumh <- cbind(spec.bin.bumh, bumh1) 
 
-autoplot(pca.bumh, data=sb.bumh, colour = "bumh", frame=TRUE, frame.type = "norm") + 
+
+pca.bu <- autoplot(pca.bumh, data = sb.bumh, colour = "bumh1", shape = "bumh1", frame = TRUE, frame.type = "norm", size = 2) + 
   theme_classic() +
   mytheme +
-  labs(fill="Specimen type", color="Specimen type")
+  scale_color_manual(values = pal.bu) +
+  scale_fill_manual(values = pal.bu) +
+  labs(fill = "Specimen type", color = "Specimen type", shape = "Specimen type")
+
+ggsave("pca_bullocks_mod_hist.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+Plot together
 
 ``` r
-ggsave("pca_bullocks.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
+label <- autoplot(pca.bumh, data = sb.bumh, shape = "bumh1", frame = TRUE, frame.type = "norm", size = 1.99) +
+  labs(shape = "Specimen type") +
+  theme_classic() +
+  mytheme 
+
+
+pg.pca <- plot_grid(
+  pca.bu + theme(legend.position="none"),
+  pca.ba + theme(legend.position="none"),
+  align = 'vh',
+  labels = c("A", "B"),
+  hjust = -1,
+  nrow = 1, label_size = 20
+)
+
+
+leg.pca <- get_legend(label + theme(legend.box.margin = margin(0,0,0,12)))
+
+plot_grid(pg.pca, leg.pca, rel_widths = c(5, 1))
+```
+
+![](mainscript_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+``` r
+ggsave("Figure_pca.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
 ```
 
 ### Within Bullocks, all 3
@@ -1634,7 +1659,7 @@ autoplot(pca.bumhr, data=sb.bumhr, colour = "bumhr", frame=TRUE, frame.type = "n
   labs(fill="Specimen type", color="Specimen type")
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](mainscript_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 ggsave("pca_bullocks_all.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
@@ -1657,17 +1682,17 @@ pca.ich <- prcomp(spec.bin.ich, scale. = TRUE)
 ich <- as.character(colnames(intercolorhist))
 ich <- gsub("\\..*", "", ich) # remove everything after "."
 ich <- ich[-1]
-sb.ich <- cbind(spec.bin.ich, ich) 
+ich1 <- ifelse(ich == "Balt_hist", "Baltimore", "Bullock's")
+sb.ich <- cbind(spec.bin.ich, ich1) 
 
-autoplot(pca.ich, data=sb.ich, colour = "ich", frame=TRUE, frame.type = "norm") + 
+pca.hist <- autoplot(pca.ich, data = sb.ich, colour = "ich1", frame=TRUE, frame.type = "norm", size = 2) + 
   theme_classic() +
   mytheme +
-  labs(fill="Specimen type", color="Specimen type")
-```
+  labs(fill="Species", color="Species") +
+  scale_shape_manual(values = c(16, 16), limits = c("Bullock's", "Baltimore")) +
+  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
+  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
 
-![](mainscript_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
-
-``` r
 ggsave("pca_inter_historic.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
 ```
 
@@ -1684,19 +1709,60 @@ pca.icm <- prcomp(spec.bin.icm, scale. = TRUE)
 
 icm <- as.character(colnames(intercolormod))
 icm <- gsub("\\..*", "", icm) # remove everything after "."
-icm <- ich[-1]
-sb.icm <- cbind(spec.bin.icm, icm) 
+icm <- icm[-1]
+icm1 <- ifelse(icm == "Balt_mod", "Baltimore", "Bullock's")
+sb.icm <- cbind(spec.bin.icm, icm1) 
 
-autoplot(pca.icm, data=sb.icm, colour = "icm", frame=TRUE, frame.type = "norm") + 
+
+pca.mod <- autoplot(pca.icm, data = sb.icm, shape = "icm1", colour = "icm1", frame=TRUE, frame.type = "norm", size = 2) + 
   theme_classic() +
   mytheme +
-  labs(fill="Specimen type", color="Specimen type")
+  labs(fill="Species", color="Species") +
+  scale_shape_manual(values = c(17, 17), limits = c("Bullock's", "Baltimore")) +
+  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
+  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
+pca.mod
 ```
 
-![](mainscript_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](mainscript_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 ggsave("pca_inter_modern.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
 ```
 
-**Figure out how to color autoplots then arrange them side by side**
+Plot together
+
+``` r
+label1 <- autoplot(pca.icm, data = sb.icm, shape = "icm1", colour = "icm1", frame=TRUE, frame.type = "norm", size = 1.99) + 
+  theme_classic() +
+  mytheme +
+  labs(fill="Species", color="Species", shape = "Species") +
+  scale_shape_manual(values = c(4, 4), limits = c("Bullock's", "Baltimore")) +
+  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
+  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
+label1
+```
+
+![](mainscript_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+``` r
+pg.pca1 <- plot_grid(
+  pca.hist + theme(legend.position="none"),
+  pca.mod + theme(legend.position="none"),
+  align = 'vh',
+  labels = c("C", "D"),
+  hjust = -1,
+  nrow = 1, label_size = 20
+)
+
+
+leg.pca1 <- get_legend(label1 + theme(legend.box.margin = margin(0,0,0,12)))
+
+plot_grid(pg.pca1, leg.pca1, rel_widths = c(5, 1))
+```
+
+![](mainscript_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
+
+``` r
+ggsave("Figure_pca1.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
+```
