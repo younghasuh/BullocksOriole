@@ -1,0 +1,43 @@
+---
+title: "Plots"
+output: 
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_float: true
+date: "6/21/2021"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# Version 1
+ggplot(alldat.orn) +
+  aes(x=date, y=H3, shape = spc, color = spc, fill = spc) +
+  geom_point(size=2) +
+  stat_smooth(method = lm, se = T, show.legend = FALSE) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Hue (H3)", x= "Collection date", color = "Species", fill = "Species", shape = "Species")  +
+  scale_color_manual(values= pal1) +
+  scale_fill_manual(values= pal1)
+
+# Verison 2
+ggplot(alldat.orn, aes(x=date, y=H3, shape = spc, color=spc)) +
+  geom_point(size=2) +
+  stat_smooth(method = lm, aes(fill=spc), se = T) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", label.x="right", label.y="bottom",
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Hue (H3)", x= "Collection date", color = "Species", fill = "Species", shape = "Species") +
+  scale_color_manual(values= pal1) +
+  scale_fill_manual(values= pal1)
+```
+
