@@ -53,6 +53,7 @@ mytheme <- theme(
   legend.title = element_text(size=16, color="black", face="bold"))
 
 pal1 <- c("#ffa600", "#58508d")
+pal2 <- c("#58508d", "#ffa600")
 pal.bu <- c("#ffc966", "#cc8400")
 pal.ba <- c("#9a96ba", "#3d3862")
 ```
@@ -501,6 +502,23 @@ bullocks <- alldat.orn[which(alldat.orn$sp == "Bull"),]
 
 # List for comparisons
 bucomp <- list(c("Bull_ref", "Bull_hist"), c("Bull_hist", "Bull_mod"), c("Bull_ref", "Bull_mod"))
+
+
+#################
+# 11.11.2021
+# Separate Bullock's mod/hist and Baltimore mode/hist
+update <- alldat.orn[which(alldat.orn$cat == "Bull_mod" | alldat.orn$cat == "Bull_hist" | alldat.orn$cat == "Balt_mod" | alldat.orn$cat == "Balt_hist"),]
+
+# List for comparisons
+updatelist <- list(c("Bull_hist", "Bull_mod"), c("Balt_hist", "Balt_mod"), c("Bull_hist", "Balt_hist"), c("Bull_mod", "Balt_mod"))
+
+
+############
+# do black patches
+update1 <- alldat.blk[which(alldat.blk$cat == "Bull_mod" | alldat.blk$cat == "Bull_hist" | alldat.blk$cat == "Balt_mod" | alldat.blk$cat == "Balt_hist"),]
+
+# List for comparisons
+updatelist1 <- list(c("Bull_hist", "Bull_mod"), c("Balt_hist", "Balt_mod"), c("Bull_hist", "Balt_hist"), c("Bull_mod", "Balt_mod"))
 ```
 
 
@@ -516,6 +534,36 @@ h2a <- ggplot(bullocks, aes(x = cat, y = B1)) +
   labs(y = "Total brightness (B1)") +
   scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference", "Historic", "Modern")) +
   ylim(7500,12510)
+
+
+#####
+h2a1 <- ggplot(update, aes(x = cat, y = B1, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = updatelist, method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
+  labs(y = "Total brightness (B1)") +
+  scale_fill_manual(values = pal1, name = "Species", limits = c("Bull", "Balt"), labels = c(expression(italic("Icterus bullockii")), expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), labels = c("Historic", "Modern","Historic", "Modern")) +
+  ylim(7500,12600) +
+  theme(legend.text.align = 0)
+
+h2a1
+
+### black
+h2blk <- ggplot(update1, aes(x = cat, y = B1, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = updatelist1, method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
+  labs(y = "Total brightness (B1)") +
+  scale_fill_manual(values = pal1, name = "Species", limits = c("Bull", "Balt"), labels = c(expression(italic("Icterus bullockii")), expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), labels = c("Historic", "Modern","Historic", "Modern")) +
+  theme(legend.text.align = 0)
+h2blk
+ggsave("Figure_h2_blk.png", plot=h2blk, width=200, height=125, units="mm", dpi=600, scale=T)
 ```
 
 2. Chroma
@@ -530,6 +578,19 @@ h2b <- ggplot(bullocks, aes(x = cat, y = S9)) +
   labs(y = "Caronetoid chroma (S9)") +
   scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference","Historic", "Modern")) +
   ylim(0.90,0.973)
+
+#############
+h2b1 <- ggplot(update, aes(x = cat, y = S9, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = S9), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = updatelist, method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
+  labs(y = "Caronetoid chroma (S9)") +
+  scale_fill_manual(values = pal1, name = "Species", limits = c("Bull", "Balt"), labels = c(expression(italic("Icterus bullockii")), expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), labels = c("Historic", "Modern","Historic", "Modern")) +
+  theme(legend.text.align = 0)
+h2b1
 ```
 
 
@@ -546,6 +607,21 @@ h2c <- ggplot(bullocks, aes(x = cat, y = H3)) +
   labs(y = "Hue (H3)") +
   scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference","Historic", "Modern")) +
   ylim(537,574)
+
+# remove ref
+h2c1 <- ggplot(update, aes(x = cat, y = H3, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = H3), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  theme_classic()+ 
+  stat_compare_means(comparisons = updatelist, method = "t.test", label = "p.signif", size = 6) + 
+  mytheme +
+  labs(y = "Hue (H3)") +
+  scale_fill_manual(values = pal1, name = "Species", limits = c("Bull", "Balt"), labels = c(expression(italic("Icterus bullockii")), expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), labels = c("Historic", "Modern","Historic", "Modern")) +
+  theme(legend.text.align = 0, legend.position = c(0.7, 0.15), legend.background = element_rect(linetype="solid", 
+                                  colour ="lightgray")) 
+  
+h2c1
 ```
 
 
@@ -563,6 +639,21 @@ pg1 <- plot_grid(
 plot_grid(pg1)
 
 ggsave("Figure_h2.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
+
+#########
+pg2 <- plot_grid(
+  h2a1 + theme(legend.position="none"),
+  h2b1 + theme(legend.position="none"),
+  h2c1,
+  align = 'vh',
+  labels = c("A", "B", "C"),
+  hjust = -1,
+  nrow = 1, label_size = 16
+)
+
+plot_grid(pg2)
+
+ggsave("Figure_h2_v2.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
 ```
 
 
@@ -600,6 +691,24 @@ h3a <- ggplot(bullocks, aes(x = date, y = B1, shape = loc, color = loc)) +
   labs(y = "Total brightness (B1)", x= "Collection date", color = "Location", fill = "Location", shape = "Location") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
+
+################
+
+bullblk <- alldat.blk[which(alldat.blk$sp == "Bull"),]
+
+ggplot(bullblk, aes(x = date, y = B1)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, se = T) +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", 
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(y = "Total brightness (B1)", x= "Collection date") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
+ggsave("black_B1_time.png", plot=last_plot(), width=200, height=125, units="mm", dpi=600, scale=T)
 ```
 
 2. Chroma
@@ -714,7 +823,7 @@ vod2 <- pivot_wider(vod, names_from = Var2, values_from = Freq)
 
 
 ggplot(vod2, aes(x=Var1, y=dS.mean)) +
-  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.6, position = position_dodge(width=1), size=1) +
+  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.4, position = position_dodge(width=1), size=1) +
   geom_point(position = position_dodge(width=1), size=5) +
   theme_classic()+ 
   mytheme + 
@@ -728,8 +837,60 @@ ggplot(vod2, aes(x=Var1, y=dS.mean)) +
     panel.grid.minor = element_blank(), # get rid of minor grid
     legend.background = element_rect(fill = "transparent"), # get rid of legend bg
     legend.box.background = element_rect(fill = "transparent"))
+
 ggsave("chromatic_contrast.png", plot = last_plot(), width = 200, height = 120, units = "mm", dpi = 300,  bg = "transparent")
+
+
+
+############################
+# select comparisons
+vod3 <- vod2 %>% 
+  filter(Var1 == "Bull_hist-Bull_mod" | Var1 == "Balt_hist-Balt_mod" | Var1 == "Balt_hist-Bull_hist" | Var1 == "Balt_mod-Bull_mod")
+
+ggplot(vod3, aes(x=Var1, y=dS.mean)) +
+  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.3, position = position_dodge(width=1), size=1) +
+  geom_point(position = position_dodge(width=1), size=5) +
+  theme_classic()+ 
+  mytheme + 
+  theme(text=element_text(family="sans")) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  coord_flip() +
+  labs(x="Centroid comparison", y = "Chromatic contrast (\u0394S)") +
+  theme(panel.background = element_rect(fill = "transparent"), # bg of the panel
+    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+    panel.grid.major = element_blank(), # get rid of major grid
+    panel.grid.minor = element_blank(), # get rid of minor grid
+    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+    legend.box.background = element_rect(fill = "transparent"))+
+  scale_x_discrete(limits = c("Balt_mod-Bull_mod", "Balt_hist-Bull_hist", "Balt_hist-Balt_mod", "Bull_hist-Bull_mod"), 
+                   labels = c("Interspecific modern", "Interspecific historic", expression(paste("Intraspecific ", italic("Icterus galbula"))), expression(paste("Intraspecific ", italic("Icterus bullockii")))))
+ggsave("chromatic_contrast1.png", plot = last_plot(), width = 200, height = 80, units = "mm", dpi = 300,  bg = "transparent")
+
+
+
+#
+ggplot(vod3, aes(x=Var1, y=dS.mean)) +
+  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.3, position = position_dodge(width=1), size=1) +
+  geom_point(position = position_dodge(width=1), size=5) +
+  theme_classic()+ 
+  mytheme + 
+  theme(text=element_text(family="sans")) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  coord_flip(clip="off") +
+  labs(x=NULL, y = "Chromatic contrast (\u0394S)") +
+  theme(panel.background = element_rect(fill = "transparent"), axis.title.y = element_text(angle = 0, hjust = 0), # bg of the panel
+    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+    panel.grid.major = element_blank(), # get rid of major grid
+    panel.grid.minor = element_blank(), # get rid of minor grid
+    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+    legend.box.background = element_rect(fill = "transparent"))+
+  scale_x_discrete(limits = c("Balt_mod-Bull_mod", "Balt_hist-Bull_hist", "Balt_hist-Balt_mod", "Bull_hist-Bull_mod"), 
+                   labels = c("Interspecific modern", "Interspecific historic", expression(paste("Intraspecific ", italic("Icterus galbula"))), expression(paste("Intraspecific ", italic("Icterus bullockii"))))) +
+  geom_text(x=4.5, y=0.2, inherit.aes = F, label = "Centroid comparison", check_overlap = T, hjust =1, fontface="bold", size=7)
+ggsave("chromatic_contrast2.png", plot = last_plot(), width = 200, height = 80, units = "mm", dpi = 300,  bg = "transparent")
+
 ```
+
 
 ```{r, fig.cap = "**Fig.** Achromatic contrasts (dS), vertical."}
 # achromatic
@@ -752,6 +913,36 @@ ggplot(vod3, aes(x=Var1, y=dL.mean)) +
     legend.background = element_rect(fill = "transparent"), # get rid of legend bg
     legend.box.background = element_rect(fill = "transparent"))
 ggsave("achromatic_contrast.png", plot = last_plot(), width = 200, height = 120, units = "mm", dpi = 300,  bg = "transparent")
+
+
+##############
+voda <- as.data.frame(as.table(vm.orn.dist.achro))
+voda1 <- pivot_wider(voda, names_from = Var2, values_from = Freq)
+
+voda2 <- voda1 %>% 
+  filter(Var1 == "Bull_hist-Bull_mod" | Var1 == "Balt_hist-Balt_mod" | Var1 == "Balt_hist-Bull_hist" | Var1 == "Balt_mod-Bull_mod")
+
+
+ggplot(voda2, aes(x=Var1, y=dL.mean)) +
+  geom_errorbar(aes(ymin = dL.lwr, ymax = dL.upr), width=.3, position = position_dodge(width=1), size=1) +
+  geom_point(position = position_dodge(width=1), size=5) +
+  theme_classic()+ 
+  mytheme + 
+  theme(text=element_text(family="sans")) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  coord_flip(clip="off") +
+  labs(x=NULL, y = "Achromatic contrast (\u0394L)") +
+  theme(panel.background = element_rect(fill = "transparent"), axis.title.y = element_text(angle = 0, hjust = 0), # bg of the panel
+    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+    panel.grid.major = element_blank(), # get rid of major grid
+    panel.grid.minor = element_blank(), # get rid of minor grid
+    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+    legend.box.background = element_rect(fill = "transparent"))+
+  scale_x_discrete(limits = c("Balt_mod-Bull_mod", "Balt_hist-Bull_hist", "Balt_hist-Balt_mod", "Bull_hist-Bull_mod"), 
+                   labels = c("Interspecific modern", "Interspecific historic", expression(paste("Intraspecific ", italic("Icterus galbula"))), expression(paste("Intraspecific ", italic("Icterus bullockii"))))) +
+  geom_text(x=4.55, y=-0.1, inherit.aes = F, label = "Centroid comparison", check_overlap = T, hjust =1, fontface="bold", size=7)
+ggsave("achromatic_contrast2.png", plot = last_plot(), width = 200, height = 80, units = "mm", dpi = 300,  bg = "transparent")
+
 ```
 
 ### Convert color distances to XYZ coordinates
@@ -768,11 +959,11 @@ jndplot(vismod.orn.cc, theta=55, phi=25, col=spec2rgb(allspec.orn.avg), arrow.la
 
 https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/beheco/29/3/10.1093_beheco_ary017/1/ary017_suppl_supplementary_material.html?Expires=1614112080&Signature=oDIUd-WkV00PmIsMMzpiW6mE6w0d0vJhS~Qly7ck5B7mReHRnnEVBmzzipJMN~sLsXOgoZx-yhj7fEPu6~7YARBU0DdVht7BhU2wNLd~upjxfiqnaoNhPtJqQ9NcYIEGR92pXG3y15XVojmhpHK9GnWlgty5-JJN5Cyck5mNXq6m~-OcQrpJEDwxtlikhRsC9NykQsIb4lN0qn1XZNh7I6fYjzDyqfAU8DZcvkXCOz0f419HmGax~nMZi7HmPM4qLQPCtyYJlDCgCE1tW-YyYwoTN9Y~nCLE4k28qFgofFSrNfIvGdq4X1SzEGkzSaAo3YlbpguAB7orp-pGPBRQzw__&Key-Pair-Id=APKAIE5G5CRDK6RD3PGA
 
+```{r message=FALSE, warning=FALSE, results=FALSE}
+library(vegan)
 1) Using *distance-based PERMANOVA* (Maia & White 2018): using `adonis` fx from R package `vegan` (distance PERMANOVA)
 
 
-```{r message=FALSE, warning=FALSE, results=FALSE}
-library(vegan)
 library(MCMCglmm)
 library(RColorBrewer)
 library(biotools)
@@ -1135,5 +1326,54 @@ leg.pca1 <- get_legend(label1 + theme(legend.box.margin = margin(0,0,0,12)))
 plot_grid(pg.pca1, leg.pca1, rel_widths = c(5, 1))
 
 ggsave("Figure_pca1.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
+```
+
+
+
+
+Plot brightness overtime
+```{r}
+orn1 <- ggplot(bullocks, aes(x = date, y = B1)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, se = T, color="#ffa600", fill="#ffa600") +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", 
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(y = "Orange patches - total brightness (B1)", x= "Collection date") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
+
+################
+
+bullblk <- alldat.blk[which(alldat.blk$sp == "Bull"),]
+
+blk1 <- ggplot(bullblk, aes(x = date, y = B1)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, se = T, color="darkgray", fill="darkgray") +
+  theme_classic() +
+  mytheme +
+  stat_fit_glance(method = "lm", 
+                        method.args = list(formula = y ~ x), size = 5, 
+                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+  labs(y = "Black patches - total brightness (B1)", x= "Collection date") +
+  scale_color_manual(values = pal1) +
+  scale_fill_manual(values = pal1)
+
+pg_time <- plot_grid(
+  orn1 + theme(legend.position="none"),
+  blk1 + theme(legend.position="none"),
+  align = 'vh',
+  labels = c("A", "B"),
+  hjust = -1,
+  nrow = 1, label_size = 16
+)
+
+plot_grid(pg_time)
+
+ggsave("Figure_time_B1.png", plot=last_plot(), width=300, height=125, units="mm", dpi=600, scale=T)
 ```
 
