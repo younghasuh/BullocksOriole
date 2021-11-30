@@ -5,3 +5,5 @@ This repository contains statistical code and data related to the manuscript tit
 Files:
 - `allspec` contains spectra data for all n specimens
 - `specimen_info.xlsx` contains information on specimens (ID, category, collection date, locality). 
+
+This is a test

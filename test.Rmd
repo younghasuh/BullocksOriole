@@ -1,0 +1,12 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r}
+library(readxl)
+
+attributes <- read_excel("oriole_specimen_info.xlsx")
+table(attributes$Code)
+```
+
