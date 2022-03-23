@@ -10,6 +10,6 @@ Data files:
 - `allspec` contains spectra data for all n specimens
 - `specimen_info.xlsx` contains information on specimens (ID, category, collection date, locality). 
 
-<img src="https://user-images.githubusercontent.com/22403928/159709486-b44bd968-b654-404b-8975-ee03bde486bb.png" width="400">
+<img src="https://user-images.githubusercontent.com/22403928/159709816-4480dde4-14b5-4b13-867e-6c2ef3b143ce.png" width="800">
 
 Any questions or concerns can be addressed to the corresponding author Young Ha Suh at ys757@cornell.edu 
