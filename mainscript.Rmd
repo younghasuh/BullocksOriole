@@ -4,6 +4,7 @@ output:
   github_document:
     toc: true
 date: "3/23/2021"
+author: Young Ha Suh, ys757@cornell.edu
 editor_options: 
   chunk_output_type: console
 ---
@@ -549,7 +550,7 @@ b1orn <- ggplot(compare, aes(x = cat, y = B1, fill = sp)) +
   scale_x_discrete(name = "Specimen type", 
                    limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
                    labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
-  theme(legend.text.align = 0, axis.text.x = element_text(angle = 45, hjust=1))
+  theme(legend.text.align = 0)
 
 
 # black
@@ -592,7 +593,7 @@ s9orn <- ggplot(compare, aes(x = cat, y = S9, fill = sp)) +
   scale_x_discrete(name = "Specimen type", 
                    limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
                    labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
-  theme(legend.text.align = 0, axis.text.x = element_text(angle = 45, hjust=1))
+  theme(legend.text.align = 0)
 s9orn
 ```
 
@@ -615,8 +616,7 @@ h3orn <- ggplot(compare, aes(x = cat, y = H3, fill = sp)) +
                    limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
                    labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
   theme(legend.text.align = 0, legend.position = c(0.7, 0.15), 
-        legend.background = element_rect(linetype="solid", colour ="lightgray"), 
-        axis.text.x = element_text(angle = 45, hjust=1)) +
+        legend.background = element_rect(linetype="solid", colour ="lightgray")) +
   ylim(530,573)
 
 h3orn 
@@ -768,7 +768,7 @@ leg <- get_legend(h3a + theme(legend.box.margin = margin(0,0,0,12)))
 
 plot_grid(pg, leg, rel_widths = c(6, 0.8))
 
-ggsave("Figure5.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
+ggsave("Figure5.png", plot=last_plot(), width=600, height=225, units="mm", dpi=600, scale=T)
 ```
 
 
@@ -786,7 +786,7 @@ vismod.orn <- vismodel(allspec.orn.avg,
   visual = "avg.uv", achromatic = "bt.dc", #blue tit double cone
   illum = "D65", relative = FALSE)
 summary(vismod.orn)
-vismod.orn
+head(vismod.orn)
 
 # Get color distances
 vismod.orn.dist <- coldist(vismod.orn,
