@@ -1,9 +1,10 @@
 # Manuscript data and code repository
 
-This repository contains statistical code and data related to the manuscript titled "" submitted to XYZ. The goal is to increase transparency and reproducibility in research.
+This repository contains statistical code and data related to the manuscript titled "Revisiting the Baltimore-Bullock’s hybrid zone reveals changing plumage color in Bullock’s orioles." submitted to The Royal Society. The goal is to increase transparency and reproducibility in research.
 
-Files:
+Use the `mainscript.md` markdown document to see the entire script used in tidying data, making figures, and conducting analyses. 
+
+Data files:
 - `allspec` contains spectra data for all n specimens
 - `specimen_info.xlsx` contains information on specimens (ID, category, collection date, locality). 
 
-This is a test
