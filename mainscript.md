@@ -2,56 +2,39 @@ Main code
 ================
 6/18/2021
 
-  - [Load libraries](#load-libraries)
-  - [Import data](#import-data)
-      - [Attribute data](#attribute-data)
-      - [Spectra data](#spectra-data)
-      - [Visually check spectra](#visually-check-spectra)
-          - [Fix odd peaks](#fix-odd-peaks)
-      - [Average spectra](#average-spectra)
-      - [Smooth spectra](#smooth-spectra)
-  - [Split orange and black patches](#split-orange-and-black-patches)
-      - [Extract orange patches](#extract-orange-patches)
-      - [Extract black patches](#extract-black-patches)
-  - [Colorimetric variables](#colorimetric-variables)
-      - [Compare boxplots across specimen
+-   [Load libraries](#load-libraries)
+-   [Import data](#import-data)
+    -   [Attribute data](#attribute-data)
+    -   [Spectra data](#spectra-data)
+    -   [Visually check spectra](#visually-check-spectra)
+        -   [Fix odd peaks](#fix-odd-peaks)
+    -   [Average spectra](#average-spectra)
+    -   [Smooth spectra](#smooth-spectra)
+-   [Split orange and black patches](#split-orange-and-black-patches)
+    -   [Extract orange patches](#extract-orange-patches)
+    -   [Extract black patches](#extract-black-patches)
+-   [Colorimetric variables](#colorimetric-variables)
+    -   [Compare boxplots across specimen
         categories](#compare-boxplots-across-specimen-categories)
-      - [Check data](#check-data)
-  - [Statistical analyses](#statistical-analyses)
-      - [H1. Have specimens faded over
+    -   [Check data](#check-data)
+-   [Statistical analyses](#statistical-analyses)
+    -   [H1. Have specimens faded over
         time?](#h1-have-specimens-faded-over-time)
-          - [1. Orange patches over time](#1-orange-patches-over-time)
-          - [2. Black patches over time](#2-black-patches-over-time)
-      - [H2. Have landuse changes affected Bullock’s
+        -   [1. Orange patches over time](#1-orange-patches-over-time)
+        -   [2. Black patches over time](#2-black-patches-over-time)
+    -   [H2. Have landuse changes affected Bullock’s
         orioles?](#h2-have-landuse-changes-affected-bullocks-orioles)
-      - [H3. Are color changes only in the hybrid
+    -   [H3. Are color changes only in the hybrid
         zone?](#h3-are-color-changes-only-in-the-hybrid-zone)
-          - [Plots](#plots)
-  - [Avian visual models](#avian-visual-models)
-      - [Noise-weighted distances with the Receptor Noise
+-   [Avian visual models](#avian-visual-models)
+    -   [Noise-weighted distances with the Receptor Noise
         Model](#noise-weighted-distances-with-the-receptor-noise-model)
-          - [Convert color distances to XYZ
-            coordinates](#convert-color-distances-to-xyz-coordinates)
-      - [Test for differences in
-        groups](#test-for-differences-in-groups)
-      - [Color space](#color-space)
-          - [split by species](#split-by-species)
-  - [Tetrahedral plot](#tetrahedral-plot)
-  - [PCA](#pca)
-      - [Within Baltimore, historic vs
-        modern](#within-baltimore-historic-vs-modern)
-      - [Within Bullock’s, historic vs
-        modern](#within-bullocks-historic-vs-modern)
-      - [Within Bullocks, all 3](#within-bullocks-all-3)
-      - [Contrast between species](#contrast-between-species)
-          - [Historic](#historic)
-          - [Modern](#modern)
 
 The following analyses is conducted on spectra data for 119 specimens.
 Sample sizes for each specimen category compose of the following:
 
 | Bullock’s oriole |        |           | Baltimore oriole |        |
-| ---------------- | ------ | --------- | ---------------- | ------ |
+|------------------|--------|-----------|------------------|--------|
 | Historic         | Modern | Reference | Historic         | Modern |
 | 20               | 20     | 40        | 20               | 19     |
 
@@ -65,7 +48,9 @@ recording; boxcar width 10
 Each specimen has 5 patches measured (2 black 3 orange) and each patch
 is measured 3 times; i.e. 15 measurements per specimen.
 
-![**Fig 1**. Patches measured on specimens.](pics.png)
+<figure>
+<img src="pics.png" style="width:30.0%" alt="Fig 1. Patches measured on specimens." /><figcaption aria-hidden="true"><strong>Fig 1</strong>. Patches measured on specimens.</figcaption>
+</figure>
 
 <br>
 
@@ -100,8 +85,8 @@ mytheme <- theme(
   legend.title = element_text(size=16, color="black", face="bold"))
 
 pal1 <- c("#ffa600", "#58508d")
-pal.bu <- c("#ffc966", "#cc8400")
-pal.ba <- c("#9a96ba", "#3d3862")
+pal2 <- c("#58508d", "#ffa600")
+pal3 <- c("#635e50", "#e59500")
 ```
 
 # Import data
@@ -116,7 +101,7 @@ knitr::kable(head(attributes))
 ```
 
 | ID      | sp\_id          | cat        | Cat Num | Species | Code             | CollectionDate | State | Higher Geography                     | Specific Locality                                  |
-| :------ | :-------------- | :--------- | ------: | :------ | :--------------- | :------------- | :---- | :----------------------------------- | :------------------------------------------------- |
+|:--------|:----------------|:-----------|--------:|:--------|:-----------------|:---------------|:------|:-------------------------------------|:---------------------------------------------------|
 | BA28299 | Balt\_Historic1 | Balt\_hist |       1 | 28299   | Baltimore Oriole | 1957-06-12     | NE    | United States, Nebraska, Polk County | Platte River, 3 miles South-Southwest Silver Creek |
 | BA28300 | Balt\_Historic2 | Balt\_hist |       2 | 28300   | Baltimore Oriole | 1957-06-12     | NE    | United States, Nebraska, Polk County | Platte River, 3 miles South-Southwest Silver Creek |
 | BA28301 | Balt\_Historic3 | Balt\_hist |       3 | 28301   | Baltimore Oriole | 1957-06-12     | NE    | United States, Nebraska, Polk County | Platte River, 3 miles South-Southwest Silver Creek |
@@ -146,6 +131,7 @@ spec <- getspec("allspec", ext = "txt", lim = c(300, 700))  # 1485 files
 spec <- as.rspec(spec)
 
 burke <- getspec("burke", ext = "txt", lim = c(300, 700)) #300 files
+burke_raw <- getspec("burke", ext = "txt", lim = c(300, 700)) #300 files
 ```
 
 ## Visually check spectra
@@ -157,12 +143,25 @@ plot(spec)
 ![**Fig 2a.** Spectra of specimens measured in
 2019.](mainscript_files/figure-gfm/See%20other%20spectra-1.png)
 
+Check spectra of Burke specimens
+
 ``` r
 plot(burke)
+
+plot(burke_raw)
 ```
 
 ![**Fig 2b.** Spectra of UWBM specimens measured in
 2021.](mainscript_files/figure-gfm/See%20burke%20spectra-1.png)
+
+``` r
+png("burke_raw_spec.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+plot(burke_raw, col = spec2rgb(burke_raw), cex.lab = 1.5, cex.axis = 1.5)
+dev.off()
+```
+
+    ## png 
+    ##   2
 
 ### Fix odd peaks
 
@@ -173,8 +172,6 @@ before/after. The areas of concern seem to be 470-500 nm and 510-560 nm.
 
 1.  Replace odd wavelengths with `NA`
 2.  Use `as.rspec` to interpolate gaps
-
-<!-- end list -->
 
 ``` r
 wl <- burke$wl
@@ -196,14 +193,21 @@ allspec <- merge(spec, burke)
 
 3.  Check new spectra
 
-<!-- end list -->
-
 ``` r
 plot(burke)
 ```
 
 ![**Fig 2c.** Spectra of UWBM
 specimens](mainscript_files/figure-gfm/See%20new%20burke%20spectra-1.png)
+
+``` r
+png("burke_corrected_spec.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+plot(burke, col = spec2rgb(burke_raw), cex.lab = 1.5, cex.axis = 1.5)
+dev.off()
+```
+
+    ## png 
+    ##   2
 
 <br>
 
@@ -291,7 +295,9 @@ colnames(asoa) <- allcategory
 
 aggplot(asoa, by = allcategory, FUN.center = median, ylim = c(0, 65),
         alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
-legend(290, 67, legend = c("BA historic", "BA modern", "BU historic", "BU modern", "BU reference"), col = c("red", "royalblue", "green", "purple", "orange", "yellow"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent")
+legend(290, 67, legend = c("BA historic", "BA modern", "BU historic", "BU modern", "BU reference"),
+       col = c("red", "royalblue", "green", "purple", "orange", "yellow"), lty=1, cex=1.2,
+       box.lty=0, lwd=2, bg="transparent")
 ```
 
 ![**Fig 5.** Spectra based on their specimen
@@ -306,9 +312,7 @@ setDT(allsum.orn, keep.rownames = TRUE)[]
 
 # convert MVZ names to be consistent with the specimen attribute data
 allsum.orn$rn <- gsub("MVZ_", "MVZ.", allsum.orn$rn)
-
 allid.orn <- do.call(rbind, strsplit(allsum.orn$rn, "\\_"))[, 1]
-
 allsum.orn$ID <- allid.orn #specimen ID
 
 # change UWBM to be consistent with the attribute data table
@@ -322,7 +326,9 @@ alldat.orn <- allsum.orn %>%
 alldat.orn$sp <- gsub("\\_.*", "", alldat.orn$cat)
 
 # Rename species category for future plotting
-alldat.orn$spc <- factor(alldat.orn$sp, levels = c("Bull", "Balt"), labels = c("Bullock's", "Baltimore"))
+alldat.orn$spc <- factor(alldat.orn$sp, 
+                         levels = c("Bull", "Balt"), 
+                         labels = c("Bullock's", "Baltimore"))
 ```
 
 #### Spectra split by species
@@ -332,6 +338,9 @@ alldat.orn$spc <- factor(alldat.orn$sp, levels = c("Bull", "Balt"), labels = c("
 asoa.ba <- subset(asoa, "Balt")
 asoa.bu <- subset(asoa, "Bull")
 
+#remove bull-ref for now
+asoa.bu2 = select(asoa.bu, 1:41)
+
 
 allcat <- as.data.frame(allcategory)
 allcat2 <- allcat %>% 
@@ -339,33 +348,33 @@ allcat2 <- allcat %>%
 colnames(asoa.ba) <- allcat2$allcategory
 
 allcat3 <- allcat %>% 
-  filter(allcategory =="wl" | allcategory == "Bull_hist" | allcategory == "Bull_mod" | allcategory == "Bull_ref")
-colnames(asoa.bu) <- allcat3$allcategory
+  filter(allcategory =="wl" | allcategory == "Bull_hist" | allcategory == "Bull_mod")
+colnames(asoa.bu2) <- allcat3$allcategory
+
 
 # plot & save
-
-#png("all_spectra_bullocks.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
-aggplot(asoa.bu, by = allcat3$allcategory, FUN.center = median, ylim = c(0, 65),
+png("all_spectra_bullocks.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+aggplot(asoa.bu2, by = allcat3$allcategory, FUN.center = median, ylim = c(0, 65),
         alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
-legend(290, 67, legend = c("Historic", "Modern", "Reference"), col = c("red", "royalblue", "green"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Bullock's oriole")
+legend(290, 67, legend = c("Historic", "Contemporary"), col = c("red", "royalblue"), 
+       lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Bullock's oriole")
+dev.off()
 ```
 
-![](mainscript_files/figure-gfm/Split%20spectra%20by%20species-1.png)<!-- -->
+    ## png 
+    ##   2
 
 ``` r
-#dev.off()
-
-#png("all_spectra_baltimore.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+png("all_spectra_baltimore.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
 aggplot(asoa.ba, by = allcat2$allcategory, FUN.center = median, ylim = c(0, 65),
         alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
-legend(290, 67, legend = c("Historic", "Modern"), col = c("red", "royalblue"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Baltimore oriole")
+legend(290, 67, legend = c("Historic", "Contemporary"), col = c("red", "royalblue"), 
+       lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Baltimore oriole")
+dev.off()
 ```
 
-![](mainscript_files/figure-gfm/Split%20spectra%20by%20species-2.png)<!-- -->
-
-``` r
-#dev.off()
-```
+    ## png 
+    ##   2
 
 ### Extract black patches
 
@@ -381,13 +390,10 @@ allspec.blk.avg <- aggspec(allspec.blk, by = 2, FUN = mean, trim = FALSE)
 allsum.blk <- summary(allspec.blk.avg)
 setDT(allsum.blk, keep.rownames = TRUE)[]
 
-# convert MVZ names to be consistent with the specimen attribute data
+# convert MVZ and UWBM names to be consistent with the specimen attribute data
 allsum.blk$rn <- gsub("MVZ_", "MVZ.", allsum.blk$rn)
-
 allid.blk <- do.call(rbind, strsplit(allsum.blk$rn, "\\_"))[, 1]
-
 allsum.blk$ID <- allid.blk #specimen ID
-
 allsum.blk$ID <- gsub("UWBM", "UWBM.BU", allsum.blk$ID)
 
 
@@ -408,11 +414,8 @@ alldat.blk$spc <- factor(alldat.blk$sp, levels = c("Bull", "Balt"), labels = c("
 
 List of variables of interest (from Pavo package; references available
 there) - `B1`: total brightness; sum of relative reflectance over entire
-spectral range (area under the curve) - `B2`: mean brightness; mean
-relative reflectance over entire spectral range - `S1`: chroma; relative
-contribution of a spectral range to the total brightness (B1) - `S9`:
-carotenoid chroma; (R700 - R450)/R700 - `H3`: hue/wavelength at Rmid;
-sensitive to noisy spectra
+spectral range (area under the curve) - `S9`: carotenoid chroma; (R700 -
+R450)/R700 - `H3`: hue/wavelength at Rmid; sensitive to noisy spectra
 
 ### Compare boxplots across specimen categories
 
@@ -426,22 +429,16 @@ plot(B1 ~ cat, data = dat, ylab = "Total brightness (B1)", xlab = "Specimen cate
 ![](mainscript_files/figure-gfm/Boxplot%20across%20specimens%20-%20orange-1.png)<!-- -->
 
 ``` r
-plot(B2 ~ cat, data = dat, ylab = "Mean brightness (B2)", xlab = "Specimen category") # same as above, just different y axis
+plot(S9 ~ cat, data = dat, ylab = "Carotenoid chroma (S9)", xlab = "Specimen category")
 ```
 
 ![](mainscript_files/figure-gfm/Boxplot%20across%20specimens%20-%20orange-2.png)<!-- -->
 
 ``` r
-plot(S9 ~ cat, data = dat, ylab = "Carotenoid chroma (S9)", xlab = "Specimen category")
-```
-
-![](mainscript_files/figure-gfm/Boxplot%20across%20specimens%20-%20orange-3.png)<!-- -->
-
-``` r
 plot(H3 ~ cat, data = dat, ylab = "Hue (H3)", xlab = "Specimen category")
 ```
 
-![](mainscript_files/figure-gfm/Boxplot%20across%20specimens%20-%20orange-4.png)<!-- -->
+![](mainscript_files/figure-gfm/Boxplot%20across%20specimens%20-%20orange-3.png)<!-- -->
 
 Black patchess
 
@@ -540,13 +537,11 @@ qqPlot(alldat.blk$B1)
 
 To test for specimen fauxing, look at colorimetric measures over time.
 
-### 1\. Orange patches over time
+### 1. Orange patches over time
 
 Check brightness, carotenoid chroma, hue
 
-1)  Brightness
-
-<!-- end list -->
+1.  Brightness
 
 ``` r
 # Both species
@@ -635,17 +630,17 @@ ggplot(alldat.orn, aes(x = date, y = B1, shape = spc, color = spc)) +
   stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Total brightness (B1)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+                                            stat(..r.squared..), stat(..p.value..))), 
+                  parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Total brightness (B1)", x = "Collection date", 
+       color = "Species", fill = "Species", shape = "Species") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
 ```
 
 ![](mainscript_files/figure-gfm/Orange%20-%20brightness%20x%20date-1.png)<!-- -->
 
-2)  Carotenoid chroma
-
-<!-- end list -->
+2.  Carotenoid chroma
 
 ``` r
 # Both species
@@ -734,17 +729,17 @@ ggplot(alldat.orn, aes(x = date, y = S9, shape = spc, color = spc)) +
   stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+                                            stat(..r.squared..), stat(..p.value..))), 
+                  parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x = "Collection date", 
+       color = "Species", fill = "Species", shape = "Species") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
 ```
 
 ![](mainscript_files/figure-gfm/Orange%20-%20chroma%20x%20date-1.png)<!-- -->
 
-3)  Hue
-
-<!-- end list -->
+3.  Hue
 
 ``` r
 # Both species
@@ -833,15 +828,17 @@ ggplot(alldat.orn, aes(x = date, y = H3, shape = spc, color = spc)) +
   stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Hue (H3)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+                                            stat(..r.squared..), stat(..p.value..))), 
+                  parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Hue (H3)", x = "Collection date", 
+       color = "Species", fill = "Species", shape = "Species") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
 ```
 
 ![](mainscript_files/figure-gfm/Orange%20-%20hue%20x%20date-1.png)<!-- -->
 
-### 2\. Black patches over time
+### 2. Black patches over time
 
 Check brightness
 
@@ -879,8 +876,10 @@ ggplot(alldat.blk, aes(x = date, y = B1, shape = spc, color = spc)) +
   stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Black patches only", y = "Brightness (B1)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+                                            stat(..r.squared..), stat(..p.value..))), 
+                  parse = TRUE) + 
+  labs(title = "Black patches only", y = "Brightness (B1)", x = "Collection date", 
+       color = "Species", fill = "Species", shape = "Species") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
 ```
@@ -894,187 +893,275 @@ ggplot(alldat.blk, aes(x = date, y = B1, shape = spc, color = spc)) +
 Compare reference vs. hybrid zone
 
 ``` r
-# Set a new variable indicating hybrid zone or outside
-alldat.orn$loc <- ifelse(alldat.orn$cat == "Bull_ref", "Outside", "Hybrid zone") 
-
-# Separate Bullock's
-bullocks <- alldat.orn[which(alldat.orn$sp == "Bull"),]
+# Select categories for comparison 
+compare <- alldat.orn[which(alldat.orn$cat == "Bull_mod" | alldat.orn$cat == "Bull_hist" | alldat.orn$cat == "Balt_mod" | alldat.orn$cat == "Balt_hist"),]
 
 # List for comparisons
-bucomp <- list(c("Bull_ref", "Bull_hist"), c("Bull_hist", "Bull_mod"), c("Bull_ref", "Bull_mod"))
+comparelist <- list(c("Bull_hist", "Bull_mod"), c("Balt_hist", "Balt_mod"))
+
+
+############
+# for black patches
+compare1 <- alldat.blk[which(alldat.blk$cat == "Bull_mod" | alldat.blk$cat == "Bull_hist" | alldat.blk$cat == "Balt_mod" | alldat.blk$cat == "Balt_hist"),]
 ```
 
-1.  Brightness
-
-<!-- end list -->
+1.  Brightness boxplots
 
 ``` r
-# Boxplots
-h2a <- ggplot(bullocks, aes(x = cat, y = B1)) +
-  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
-  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
-  theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(11900, 11600, 12200), method = "t.test", label = "p.signif", size = 6) + 
+b1orn <- ggplot(compare, aes(x = cat, y = B1, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", 
+               position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) +
+  theme_classic()+
   mytheme +
   labs(y = "Total brightness (B1)") +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference", "Historic", "Modern")) +
-  ylim(7500,12510)
+  scale_fill_manual(values = pal1, name = "Species", 
+                    limits = c("Bull", "Balt"), 
+                    labels = c(expression(italic("Icterus bullockii")), 
+                               expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", 
+                   limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
+                   labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
+  theme(legend.text.align = 0, axis.text.x = element_text(angle = 45, hjust=1))
+
+
+# black
+b1blk <- ggplot(compare1, aes(x = cat, y = B1, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", 
+               position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) + 
+  theme_classic()+ 
+  mytheme +
+  labs(y = "Total brightness (B1)") +
+  scale_fill_manual(values = pal1, name = "Species", 
+                    limits = c("Bull", "Balt"), 
+                    labels = c(expression(italic("Icterus bullockii")), 
+                               expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", 
+                   limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
+                   labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
+  theme(legend.text.align = 0) +
+  ylim(900,4000)
+b1blk
+```
+
+![](mainscript_files/figure-gfm/compare%20across%20bullocks%20groups%20-%20brightness-1.png)<!-- -->
+
+``` r
+ggsave("Figure4.png", plot=b1blk, width=200, height=125, units="mm", dpi=600, scale=T)
 ```
 
 2.  Chroma
 
-<!-- end list -->
-
 ``` r
-# Boxplots
-h2b <- ggplot(bullocks, aes(x = cat, y = S9)) +
-  stat_boxplot(aes(x = cat, y = S9), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
-  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
+s9orn <- ggplot(compare, aes(x = cat, y = S9, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = S9), geom = "errorbar", 
+               position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) + 
   theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(0.96, 0.966, 0.972), method = "t.test", label = "p.signif", size = 6) + 
   mytheme +
   labs(y = "Caronetoid chroma (S9)") +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference","Historic", "Modern")) +
-  ylim(0.90,0.973)
+  scale_fill_manual(values = pal1, name = "Species", 
+                    limits = c("Bull", "Balt"), 
+                    labels = c(expression(italic("Icterus bullockii")), 
+                               expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", 
+                   limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
+                   labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
+  theme(legend.text.align = 0, axis.text.x = element_text(angle = 45, hjust=1))
+s9orn
 ```
+
+![](mainscript_files/figure-gfm/compare%20across%20bullocks%20groups%20-%20chroma-1.png)<!-- -->
 
 3.  Hue
 
-<!-- end list -->
-
 ``` r
-# Boxplots
-h2c <- ggplot(bullocks, aes(x = cat, y = H3)) +
-  stat_boxplot(aes(x = cat, y = H3), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
-  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
+h3orn <- ggplot(compare, aes(x = cat, y = H3, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = H3), geom = "errorbar", 
+               position = position_dodge(width = .75), width = .5) +
+  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) + 
   theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(569, 567, 571), method = "t.test", label = "p.signif", size = 6) + 
   mytheme +
   labs(y = "Hue (H3)") +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference","Historic", "Modern")) +
-  ylim(537,574)
+  scale_fill_manual(values = pal1, name = "Species", 
+                    limits = c("Bull", "Balt"), 
+                    labels = c(expression(italic("Icterus bullockii")), 
+                               expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", 
+                   limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
+                   labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
+  theme(legend.text.align = 0, legend.position = c(0.7, 0.15), 
+        legend.background = element_rect(linetype="solid", colour ="lightgray"), 
+        axis.text.x = element_text(angle = 45, hjust=1)) +
+  ylim(530,573)
+
+h3orn 
 ```
 
+![](mainscript_files/figure-gfm/compare%20across%20bullocks%20groups%20-%20hue-1.png)<!-- -->
+
+Plot all three together
+
 ``` r
-pg1 <- plot_grid(
-  h2a + theme(legend.position="none"),
-  h2b + theme(legend.position="none"),
-  h2c + theme(legend.position="none"),
+#########
+pg <- plot_grid(
+  b1orn + theme(legend.position="none"),
+  s9orn + theme(legend.position="none"),
+  h3orn,
   align = 'vh',
   labels = c("A", "B", "C"),
   hjust = -1,
   nrow = 1, label_size = 16
 )
+
+plot_grid(pg)
 ```
 
-    ## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
-    
-    ## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
-
-    ## Warning: Removed 2 rows containing non-finite values (stat_signif).
-
-    ## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
-    
-    ## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
-
-    ## Warning: Removed 2 rows containing non-finite values (stat_signif).
+![](mainscript_files/figure-gfm/compare%20across%20bullocks%20groups%20-%20all3-1.png)<!-- -->
 
 ``` r
-plot_grid(pg1)
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
-
-``` r
-ggsave("Figure_h2.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
+ggsave("Figure3.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
 ```
 
 <br>
 
 ## H3. Are color changes only in the hybrid zone?
 
+``` r
+# Set a new variable indicating hybrid zone or outside
+alldat.orn$loc <- ifelse(alldat.orn$cat == "Bull_ref", "Outside", "Hybrid zone") 
+
+# Separate Bullock's
+bullocks <- alldat.orn[which(alldat.orn$sp == "Bull"),]
+```
+
 Linear models
 
 ``` r
-lm_orn_hz_b1 <- lm(B1 ~ date, data = bullocks[which(bullocks$loc == "Hybrid zone"),])
-summary(lm_orn_hz_b1) # p = 0.142  
+lm1 <- lm(B1 ~ date*loc, data=bullocks)
+summary(lm1)
 ```
 
     ## 
     ## Call:
-    ## lm(formula = B1 ~ date, data = bullocks[which(bullocks$loc == 
-    ##     "Hybrid zone"), ])
+    ## lm(formula = B1 ~ date * loc, data = bullocks)
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -1480.46  -635.12    72.99   591.49  1177.82 
+    ## -1861.64  -626.36    62.42   591.49  1988.79 
     ## 
     ## Coefficients:
-    ##               Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept) 9811.91897  132.85563  73.854   <2e-16 ***
-    ## date          -0.01558    0.01039  -1.499    0.142    
+    ##                   Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)     9811.91897  141.97455  69.110   <2e-16 ***
+    ## date              -0.01558    0.01110  -1.403   0.1648    
+    ## locOutside      -117.67770  189.01539  -0.623   0.5354    
+    ## date:locOutside    0.03556    0.01441   2.467   0.0159 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 733.7 on 38 degrees of freedom
-    ## Multiple R-squared:  0.05583,    Adjusted R-squared:  0.03098 
-    ## F-statistic: 2.247 on 1 and 38 DF,  p-value: 0.1421
+    ## Residual standard error: 784.1 on 76 degrees of freedom
+    ## Multiple R-squared:  0.08193,    Adjusted R-squared:  0.04569 
+    ## F-statistic: 2.261 on 3 and 76 DF,  p-value: 0.08815
 
 ``` r
-lm_orn_hz_s9 <- lm(S9 ~ date, data = bullocks[which(bullocks$loc == "Hybrid zone"),])
-summary(lm_orn_hz_s9) # p = 8.99e-05 ***
+plot(lm1) 
+```
+
+![](mainscript_files/figure-gfm/H3%20models-1.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-2.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-3.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-4.png)<!-- -->
+
+``` r
+vif(lm1) 
+```
+
+    ##     date      loc date:loc 
+    ## 2.701314 1.162218 2.475218
+
+``` r
+lm2 <- lm(S9 ~ date*loc, data=bullocks)
+summary(lm2)
 ```
 
     ## 
     ## Call:
-    ## lm(formula = S9 ~ date, data = bullocks[which(bullocks$loc == 
-    ##     "Hybrid zone"), ])
+    ## lm(formula = S9 ~ date * loc, data = bullocks)
     ## 
     ## Residuals:
-    ##        Min         1Q     Median         3Q        Max 
-    ## -0.0163117 -0.0035610 -0.0001842  0.0048103  0.0145768 
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.036340 -0.003686  0.000129  0.006411  0.025940 
     ## 
     ## Coefficients:
-    ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept) 9.400e-01  1.306e-03 719.993  < 2e-16 ***
-    ## date        4.473e-07  1.021e-07   4.381 8.99e-05 ***
+    ##                   Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)      9.400e-01  2.027e-03 463.689  < 2e-16 ***
+    ## date             4.473e-07  1.585e-07   2.821 0.006102 ** 
+    ## locOutside      -1.439e-02  2.699e-03  -5.333  9.6e-07 ***
+    ## date:locOutside -7.704e-07  2.058e-07  -3.743 0.000351 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.00721 on 38 degrees of freedom
-    ## Multiple R-squared:  0.3355, Adjusted R-squared:  0.3181 
-    ## F-statistic: 19.19 on 1 and 38 DF,  p-value: 8.992e-05
+    ## Residual standard error: 0.0112 on 76 degrees of freedom
+    ## Multiple R-squared:  0.4347, Adjusted R-squared:  0.4123 
+    ## F-statistic: 19.48 on 3 and 76 DF,  p-value: 1.822e-09
 
 ``` r
-lm_orn_hz_h3 <- lm(H3 ~ date, data = bullocks[which(bullocks$loc == "Hybrid zone"),])
-summary(lm_orn_hz_h3) # p = 2.04e-05 ***
+plot(lm2) 
+```
+
+![](mainscript_files/figure-gfm/H3%20models-5.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-6.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-7.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-8.png)<!-- -->
+
+``` r
+vif(lm2)
+```
+
+    ##     date      loc date:loc 
+    ## 2.701314 1.162218 2.475218
+
+``` r
+lm3 <- lm(H3 ~ date*loc, data=bullocks)
+summary(lm3)
 ```
 
     ## 
     ## Call:
-    ## lm(formula = H3 ~ date, data = bullocks[which(bullocks$loc == 
-    ##     "Hybrid zone"), ])
+    ## lm(formula = H3 ~ date * loc, data = bullocks)
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -13.3607  -5.3807   0.2192   4.7985  16.6393 
+    ## -13.3607  -5.2640  -0.3296   3.9716  18.0050 
     ## 
     ## Coefficients:
-    ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept) 5.488e+02  1.281e+00 428.465  < 2e-16 ***
-    ## date        4.871e-04  1.002e-04   4.863 2.04e-05 ***
+    ##                   Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)      5.488e+02  1.294e+00 423.991  < 2e-16 ***
+    ## date             4.871e-04  1.012e-04   4.812 7.41e-06 ***
+    ## locOutside       9.535e-01  1.723e+00   0.553    0.582    
+    ## date:locOutside -5.401e-04  1.314e-04  -4.110 9.89e-05 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 7.073 on 38 degrees of freedom
-    ## Multiple R-squared:  0.3836, Adjusted R-squared:  0.3674 
-    ## F-statistic: 23.65 on 1 and 38 DF,  p-value: 2.036e-05
+    ## Residual standard error: 7.148 on 76 degrees of freedom
+    ## Multiple R-squared:  0.2484, Adjusted R-squared:  0.2188 
+    ## F-statistic: 8.374 on 3 and 76 DF,  p-value: 7.03e-05
+
+``` r
+plot(lm3) 
+```
+
+![](mainscript_files/figure-gfm/H3%20models-9.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-10.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-11.png)<!-- -->![](mainscript_files/figure-gfm/H3%20models-12.png)<!-- -->
+
+``` r
+vif(lm3)
+```
+
+    ##     date      loc date:loc 
+    ## 2.701314 1.162218 2.475218
 
 #### Plots
 
 1.  Brightness
-
-<!-- end list -->
 
 ``` r
 # Regression over time 
@@ -1083,18 +1170,44 @@ h3a <- ggplot(bullocks, aes(x = date, y = B1, shape = loc, color = loc)) +
   stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", 
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(y = "Total brightness (B1)", x= "Collection date", color = "Location", fill = "Location", shape = "Location") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
+#  stat_fit_glance(method = "lm", 
+#                        method.args = list(formula = y ~ x), size = 5, 
+#                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+#                                            stat(..r.squared..), stat(..p.value..))), 
+#  parse = TRUE) + 
+  labs(y = "Total brightness (B1)", x= "Collection date", color = "Location", 
+       fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal3) +
+  scale_fill_manual(values = pal3)
+
+################
+# black patches 
+# not in manuscript 
+
+bullblk <- alldat.blk[which(alldat.blk$sp == "Bull"),]
+
+ggplot(bullblk, aes(x = date, y = B1)) +
+  geom_point(size = 2) +
+  stat_smooth(method = lm, se = T, col="black") +
+  theme_classic() +
+  mytheme +
+#  stat_fit_glance(method = "lm", 
+#                        method.args = list(formula = y ~ x), size = 5, 
+#                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+#                                            stat(..r.squared..), stat(..p.value..))),
+#                        parse = TRUE) + 
+  labs(y = "Total brightness (B1)", x= "Collection date") +
+  scale_color_manual(values = pal3) +
+  scale_fill_manual(values = pal3)
+```
+
+![](mainscript_files/figure-gfm/Compare%20across%20bullocks%20hybrid%20zone%20-%20brightness-1.png)<!-- -->
+
+``` r
+#ggsave("black_B1_time2.png", plot=last_plot(), width=200, height=125, units="mm", dpi=600, scale=T)
 ```
 
 2.  Chroma
-
-<!-- end list -->
 
 ``` r
 h3b <- ggplot(bullocks, aes(x = date, y = S9, shape = loc, color = loc)) +
@@ -1102,18 +1215,18 @@ h3b <- ggplot(bullocks, aes(x = date, y = S9, shape = loc, color = loc)) +
   stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm",
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(y = "Carotenoid chroma (S9)", x = "Collection date", color = "Location", fill = "Location", shape = "Location") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
+#  stat_fit_glance(method = "lm",
+#                        method.args = list(formula = y ~ x), size = 5, 
+#                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+#                                            stat(..r.squared..), stat(..p.value..))), 
+#                  parse = TRUE) + 
+  labs(y = "Carotenoid chroma (S9)", x = "Collection date", color = "Location", 
+       fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal3) +
+  scale_fill_manual(values = pal3)
 ```
 
 3.  Hue
-
-<!-- end list -->
 
 ``` r
 h3c <- ggplot(bullocks, aes(x = date, y = H3, shape = loc, color = loc)) +
@@ -1121,13 +1234,15 @@ h3c <- ggplot(bullocks, aes(x = date, y = H3, shape = loc, color = loc)) +
   stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", 
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(y = "Hue (H3)", x = "Collection date", color = "Location", fill = "Location", shape = "Location") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
+#  stat_fit_glance(method = "lm", 
+#                        method.args = list(formula = y ~ x), size = 5, 
+#                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+#                                            stat(..r.squared..), stat(..p.value..))), 
+#                        parse = TRUE) + 
+  labs(y = "Hue (H3)", x = "Collection date", color = "Location", 
+       fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal3) +
+  scale_fill_manual(values = pal3)
 ```
 
 Merge
@@ -1151,7 +1266,7 @@ plot_grid(pg, leg, rel_widths = c(6, 0.8))
 ![](mainscript_files/figure-gfm/Merge%20all%20plots-1.png)<!-- -->
 
 ``` r
-ggsave("Figure_h3.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
+ggsave("Figure5.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
 ```
 
 <br>
@@ -1179,27 +1294,151 @@ summary(vismod.orn)
     ##  * Transmission: ideal 
     ##  * Relative: FALSE
 
-    ##        u                  s                 m                l         
-    ##  Min.   :0.009559   Min.   :0.01962   Min.   :0.1903   Min.   :0.4037  
-    ##  1st Qu.:0.013330   1st Qu.:0.02853   1st Qu.:0.2468   1st Qu.:0.5003  
-    ##  Median :0.014955   Median :0.03245   Median :0.2761   Median :0.5276  
-    ##  Mean   :0.015074   Mean   :0.03389   Mean   :0.2762   Mean   :0.5259  
-    ##  3rd Qu.:0.016676   3rd Qu.:0.03710   3rd Qu.:0.3025   3rd Qu.:0.5518  
-    ##  Max.   :0.022557   Max.   :0.05819   Max.   :0.3674   Max.   :0.6082  
+    ##        u                 s                 m                l         
+    ##  Min.   :0.01557   Min.   :0.02199   Min.   :0.1942   Min.   :0.3884  
+    ##  1st Qu.:0.02157   1st Qu.:0.03196   1st Qu.:0.2519   1st Qu.:0.4813  
+    ##  Median :0.02436   Median :0.03633   Median :0.2831   Median :0.5077  
+    ##  Mean   :0.02444   Mean   :0.03796   Mean   :0.2828   Mean   :0.5059  
+    ##  3rd Qu.:0.02717   3rd Qu.:0.04156   3rd Qu.:0.3104   3rd Qu.:0.5308  
+    ##  Max.   :0.03580   Max.   :0.06528   Max.   :0.3780   Max.   :0.5850  
     ##       lum        
-    ##  Min.   :0.2221  
-    ##  1st Qu.:0.2774  
-    ##  Median :0.2948  
-    ##  Mean   :0.2934  
-    ##  3rd Qu.:0.3113  
-    ##  Max.   :0.3514
+    ##  Min.   :0.2202  
+    ##  1st Qu.:0.2750  
+    ##  Median :0.2931  
+    ##  Mean   :0.2917  
+    ##  3rd Qu.:0.3100  
+    ##  Max.   :0.3500
+
+``` r
+vismod.orn
+```
+
+    ##                            u          s         m         l       lum
+    ## BA28299_orn1      0.02796984 0.04674980 0.3066663 0.5569209 0.3209003
+    ## BA28300_orn1      0.02791030 0.05063279 0.2778269 0.5269098 0.2993215
+    ## BA28301_orn1      0.02047566 0.02977987 0.2449819 0.5119533 0.2749199
+    ## BA28302_orn1      0.02362612 0.03791154 0.2180511 0.5373897 0.2714292
+    ## BA28304_orn1      0.02695147 0.04102449 0.2722164 0.5602838 0.3044113
+    ## BA28305_orn1      0.01944704 0.02842880 0.2796832 0.5564919 0.3036157
+    ## BA28306_orn1      0.02371610 0.03918074 0.2472169 0.5309015 0.2836275
+    ## BA28308_orn1      0.02527853 0.03957233 0.2694793 0.5531644 0.3011530
+    ## BA28415_orn1      0.03579648 0.06528205 0.3107282 0.5487583 0.3244227
+    ## BA28416_orn1      0.01557564 0.02712400 0.2576541 0.5151815 0.2801811
+    ## BA28417_orn1      0.02010927 0.03121793 0.2672744 0.5656235 0.3011202
+    ## BA28420_orn1      0.02201513 0.04070105 0.2964101 0.5378059 0.3085718
+    ## BA28467_orn1      0.01959268 0.03067119 0.2318922 0.4716554 0.2571397
+    ## BA28468_orn1      0.02381147 0.03532815 0.2503082 0.5272249 0.2835080
+    ## BA28469_orn1      0.01945881 0.03145711 0.2319476 0.5219797 0.2725489
+    ## BA28470_orn1      0.02428966 0.03680706 0.2646369 0.5850099 0.3075707
+    ## BA28471_orn1      0.03064509 0.05256067 0.3036660 0.5358270 0.3142068
+    ## BA28472_orn1      0.02367486 0.03449798 0.2798117 0.5185254 0.2937093
+    ## BA28473_orn1      0.02934752 0.05103340 0.2838316 0.5132094 0.2976653
+    ## BA28474_orn1      0.02728949 0.03787244 0.3071625 0.5421160 0.3144608
+    ## BA56813_orn1      0.01980752 0.03580421 0.2765126 0.5127555 0.2900836
+    ## BA56814_orn1      0.02135699 0.03461725 0.2414293 0.4376250 0.2514180
+    ## BA56825_orn1      0.02132392 0.03216299 0.2438876 0.5653121 0.2911940
+    ## BA56830_orn1      0.02538225 0.03488949 0.2896194 0.5561781 0.3101500
+    ## BA56832_orn1      0.02658829 0.03795292 0.2281457 0.5365369 0.2770920
+    ## BA56852_orn1      0.03062735 0.03624071 0.3462528 0.5637404 0.3380908
+    ## BA57662_orn1      0.02507860 0.03284063 0.2250493 0.4637112 0.2528743
+    ## BA57663_orn1      0.02750858 0.03559450 0.2806929 0.4935013 0.2874941
+    ## BA57710_orn1      0.02540106 0.03737057 0.2950618 0.5325031 0.3057626
+    ## BA57712_orn1      0.02941402 0.03906280 0.2837596 0.5061864 0.2931080
+    ## BA57715_orn1      0.02377362 0.02997888 0.2615390 0.4860206 0.2748716
+    ## BA57730_orn1      0.02727192 0.03496634 0.2708887 0.5307083 0.2945731
+    ## BA57748_orn1      0.02768425 0.03333430 0.3024750 0.5231693 0.3053599
+    ## BA57750_orn1      0.02127258 0.03104613 0.2712507 0.5030108 0.2844704
+    ## BA57757_orn1      0.02638886 0.03254863 0.2856518 0.5680426 0.3116285
+    ## BA57758_orn1      0.02019642 0.02667294 0.2718507 0.5050631 0.2843643
+    ## BA57890_orn1      0.03029396 0.04206295 0.3251377 0.5301327 0.3196969
+    ## BA57965_orn1      0.02317017 0.03126176 0.2660184 0.5199092 0.2871160
+    ## BA58010_orn1      0.02652631 0.03844544 0.2689497 0.5274507 0.2931536
+    ## BU26842_orn1      0.02055550 0.03176553 0.2637964 0.4581977 0.2680033
+    ## BU26843_orn1      0.02989526 0.04480868 0.3178904 0.5443314 0.3221412
+    ## BU26844_orn1      0.02435952 0.03860934 0.3601839 0.5077396 0.3265739
+    ## BU26845_orn1      0.01944343 0.03235683 0.3358882 0.4737425 0.3038151
+    ## BU26846_orn1      0.02563547 0.03621155 0.3780429 0.5411545 0.3444389
+    ## BU26847_orn1      0.02577437 0.04136297 0.2521002 0.5245020 0.2837131
+    ## BU26848_orn1      0.02162370 0.03608451 0.3571682 0.5397303 0.3342563
+    ## BU26849_orn1      0.02568997 0.03761574 0.2944109 0.5001620 0.2956900
+    ## BU26850_orn1      0.03394973 0.04731088 0.3473471 0.5277976 0.3309739
+    ## BU26851_orn1      0.02352189 0.03211698 0.2532990 0.4863788 0.2712093
+    ## BU26932_orn1      0.03214428 0.04759147 0.3707046 0.4942539 0.3303755
+    ## BU26938_orn1      0.02392425 0.03915949 0.2868571 0.4993519 0.2910095
+    ## BU26939_orn1      0.02151170 0.03595544 0.3013883 0.4858828 0.2931236
+    ## BU26940_orn1      0.02629528 0.03735117 0.3575595 0.5071788 0.3251479
+    ## BU26941_orn1      0.02814080 0.04091099 0.3254890 0.4843398 0.3053804
+    ## BU26942_orn1      0.02226399 0.03744872 0.2746045 0.4696085 0.2771699
+    ## BU26943_orn1      0.01613791 0.02925685 0.2616571 0.4869706 0.2734294
+    ## BU26944_orn1      0.02070246 0.03074954 0.2156081 0.4695440 0.2476809
+    ## BU26945_orn1      0.03031754 0.05168099 0.3564381 0.5269601 0.3347009
+    ## BU26946_orn1      0.02458785 0.03551942 0.2958086 0.4544581 0.2812017
+    ## BU56854_orn1      0.02625576 0.03139326 0.2834424 0.5017296 0.2897527
+    ## BU57614_orn1      0.02346643 0.02788794 0.2507426 0.4977058 0.2733923
+    ## BU57647_orn1      0.03070174 0.03894837 0.2870074 0.5143249 0.2965901
+    ## BU57648_orn1      0.02948198 0.03324336 0.2237126 0.5258957 0.2686905
+    ## BU57649_orn1      0.01794243 0.02552674 0.2037971 0.4825542 0.2443615
+    ## BU57650_orn1      0.02889067 0.03501779 0.2516752 0.5519882 0.2902955
+    ## BU57652_orn1      0.02904048 0.03195839 0.2606568 0.5600177 0.2958629
+    ## BU57653_orn1      0.02612852 0.03056790 0.2548113 0.5423787 0.2883962
+    ## BU57737_orn1      0.01691286 0.02198793 0.2281638 0.5045853 0.2627774
+    ## BU57994_orn1      0.02706600 0.03632875 0.3174218 0.5564887 0.3225371
+    ## BU58002_orn1      0.02626447 0.03181247 0.2303896 0.5178631 0.2687958
+    ## BU58119_orn1      0.02877483 0.03523447 0.2846726 0.5111248 0.2940739
+    ## BU58127_orn1      0.02575816 0.02955226 0.2306500 0.4873741 0.2606179
+    ## BU58129_orn1      0.02629740 0.03188247 0.2766591 0.5195644 0.2920888
+    ## BU58130_orn1      0.02233111 0.02752743 0.2059329 0.4768095 0.2458992
+    ## BU58131_orn1      0.02567438 0.02807080 0.2227788 0.4450964 0.2442773
+    ## BU58137_orn1      0.02466369 0.02770546 0.2433841 0.4487684 0.2549564
+    ## BU58138_orn1      0.01557441 0.02727219 0.1992891 0.4416505 0.2305895
+    ## BU58140_orn1      0.02743730 0.03526477 0.3004666 0.5173591 0.3026909
+    ## BU58141_orn1      0.02689312 0.03195691 0.2770678 0.4872802 0.2814893
+    ## MVZ_BU123442_orn1 0.01850014 0.03790981 0.2342114 0.4526627 0.2534928
+    ## MVZ_BU136690_orn1 0.03248108 0.04643590 0.3519030 0.5838730 0.3500432
+    ## MVZ_BU147393_orn1 0.02260356 0.04065882 0.3099909 0.4729095 0.2945274
+    ## MVZ_BU147395_orn1 0.02088717 0.03764275 0.2888074 0.4718032 0.2834727
+    ## MVZ_BU163024_orn1 0.02372045 0.03767827 0.3152666 0.5562934 0.3219474
+    ## MVZ_BU163026_orn1 0.01721616 0.02856034 0.2423307 0.4928231 0.2676124
+    ## MVZ_BU165823_orn1 0.01991413 0.02993584 0.2035702 0.4637613 0.2400153
+    ## MVZ_BU26842_orn1  0.02247029 0.04033016 0.3029093 0.4766891 0.2922266
+    ## MVZ_BU28167_orn1  0.02377104 0.03852595 0.3560773 0.5252397 0.3307880
+    ## MVZ_BU34099_orn1  0.02184989 0.03161251 0.2119021 0.4434056 0.2394742
+    ## MVZ_BU5182_orn1   0.01759971 0.03474942 0.2375780 0.4310673 0.2476265
+    ## MVZ_BU57658_orn1  0.02180008 0.03620415 0.3137255 0.5226315 0.3102457
+    ## MVZ_BU62167_orn1  0.02100451 0.03482360 0.2987441 0.5570055 0.3145327
+    ## MVZ_BU65311_orn1  0.01747584 0.04138248 0.2875195 0.4889242 0.2878055
+    ## MVZ_BU78245_orn1  0.01941314 0.03187771 0.2096335 0.3884183 0.2216850
+    ## MVZ_BU88648_orn1  0.01615934 0.03311181 0.1942208 0.4097068 0.2201658
+    ## MVZ_BU8940_orn1   0.02390707 0.05077865 0.3009464 0.4759848 0.2938056
+    ## MVZ_BU8942_orn1   0.02449743 0.04173230 0.2896418 0.5165135 0.2992283
+    ## MVZ_BU8943_orn1   0.03098834 0.06000429 0.3174131 0.4953682 0.3099498
+    ## MVZ_BU95633_orn1  0.01959981 0.03581566 0.3200783 0.4730495 0.2969712
+    ## UWBM104549_orn1   0.02840090 0.05135142 0.3244437 0.5006347 0.3119781
+    ## UWBM109429_orn1   0.02362714 0.04624779 0.3174980 0.5369759 0.3177555
+    ## UWBM122228_orn1   0.02377313 0.04128109 0.2831305 0.4789006 0.2836170
+    ## UWBM122453_orn1   0.02967937 0.05754714 0.3721397 0.5165774 0.3410603
+    ## UWBM122617_orn1   0.02230079 0.04218715 0.2955651 0.4989486 0.2952310
+    ## UWBM37214_orn1    0.02045407 0.03804626 0.2830870 0.4652819 0.2788188
+    ## UWBM41002_orn1    0.02618356 0.04387880 0.3153967 0.4844875 0.3014775
+    ## UWBM42201_orn1    0.02611214 0.04804540 0.2927911 0.4300692 0.2751286
+    ## UWBM48344_orn1    0.02162147 0.04560328 0.2668323 0.4415944 0.2654217
+    ## UWBM50074_orn1    0.02445273 0.04829231 0.3592680 0.5286412 0.3354275
+    ## UWBM53665_orn1    0.02440393 0.04047545 0.3585366 0.5439974 0.3379698
+    ## UWBM55942_orn1    0.02890605 0.04650070 0.3088966 0.4996235 0.3036636
+    ## UWBM55954_orn1    0.02421119 0.04595139 0.2838704 0.4700851 0.2819990
+    ## UWBM59056_orn1    0.02399482 0.04627630 0.3470955 0.4847319 0.3166015
+    ## UWBM59058_orn1    0.02686351 0.05231756 0.3230026 0.4799697 0.3050020
+    ## UWBM59333_orn1    0.02652147 0.04683603 0.3274903 0.5076623 0.3142630
+    ## UWBM79812_orn1    0.02756083 0.05705688 0.2823355 0.4629213 0.2820442
+    ## UWBM86267_orn1    0.02172128 0.03452629 0.2378279 0.5288757 0.2742328
+    ## UWBM88853_orn1    0.02362812 0.04208856 0.3469151 0.4961049 0.3189048
+    ## UWBM91361_orn1    0.03030422 0.04557543 0.2605167 0.5012688 0.2805080
 
 ``` r
 # Get color distances
 vismod.orn.dist <- coldist(vismod.orn,
   noise = "neural", achromatic = TRUE, n = c(1, 2, 2, 4),
-  weber = 0.1, weber.achro = 0.1
-)
+  weber = 0.1, weber.achro = 0.1)
 
 
 # bootstrap color distances
@@ -1207,28 +1446,7 @@ cate <- allcategory[-1] # get list made from above but remove wl from vector
 
 vm.orn.dist <- bootcoldist(vismod.orn, by = cate, n = c(1,2,2,4), weber=0.1, achromatic = FALSE)
 #vm.orn.dist
-
-#achromatic
-vm.orn.dist.achro <- bootcoldist(vismod.orn, by = cate, n = c(1,2,2,4), weber=0.1, achromatic = TRUE, weber.achro = 0.1)
 ```
-
-``` r
-# plot
-plot(vm.orn.dist[, 1], 
-     ylim = c(0, 5), 
-     pch = 21, 
-     bg = 1, 
-     cex = 2, 
-     xaxt = 'n', 
-     xlab = 'Centroid comparison', 
-     ylab = 'Chromatic contrast (dS)')
-axis(1, at = 1:10, labels = rownames(vm.orn.dist))
-segments(1:10, vm.orn.dist[, 2], 1:10, vm.orn.dist[, 3], lwd = 2)  # Add CI's
-abline(h = 1, lty = 3, lwd = 2)  # Add a 'threshold' line at dS = 1
-```
-
-![**Fig.** Chromatic contrasts (dS),
-horizontal.](mainscript_files/figure-gfm/unnamed-chunk-4-1.png)
 
 ``` r
 # ggplot
@@ -1236,533 +1454,41 @@ horizontal.](mainscript_files/figure-gfm/unnamed-chunk-4-1.png)
 vod <- as.data.frame(as.table(vm.orn.dist))
 vod2 <- pivot_wider(vod, names_from = Var2, values_from = Freq)
 
+# select comparisons
+vod3 <- vod2 %>% 
+  filter(Var1 == "Bull_hist-Bull_mod" | Var1 == "Balt_hist-Balt_mod" | 
+         Var1 == "Balt_hist-Bull_hist" | Var1 == "Balt_mod-Bull_mod")
 
-ggplot(vod2, aes(x=Var1, y=dS.mean)) +
-  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.6, position = position_dodge(width=1), size=1) +
+ggplot(vod3, aes(x=Var1, y=dS.mean)) +
+  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.3, 
+                position = position_dodge(width=1), size=1) +
   geom_point(position = position_dodge(width=1), size=5) +
   theme_classic()+ 
   mytheme + 
   theme(text=element_text(family="sans")) +
   geom_hline(yintercept = 1, linetype = "dashed") +
-  coord_flip() +
-  labs(x="Centroid comparison", y = "Chromatic contrast (\u0394S)") +
-  theme(panel.background = element_rect(fill = "transparent"), # bg of the panel
-    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-    panel.grid.major = element_blank(), # get rid of major grid
-    panel.grid.minor = element_blank(), # get rid of minor grid
-    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-    legend.box.background = element_rect(fill = "transparent"))
+  coord_flip(clip="off") +
+  labs(x=NULL, y = "Chromatic contrast (\u0394S)") +
+  theme(panel.background = element_rect(fill = "transparent"), 
+        axis.title.y = element_text(angle = 0, hjust = 0), # bg of the panel
+        plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+        panel.grid.major = element_blank(), # get rid of major grid
+        panel.grid.minor = element_blank(), # get rid of minor grid
+        legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+        legend.box.background = element_rect(fill = "transparent"))+
+  scale_x_discrete(limits = c("Balt_mod-Bull_mod", "Balt_hist-Bull_hist", 
+                              "Balt_hist-Balt_mod", "Bull_hist-Bull_mod"), 
+                   labels = c("Interspecific contemporary", "Interspecific historic",
+                              expression(paste("Intraspecific ", italic("Icterus galbula"))),
+                              expression(paste("Intraspecific ", italic("Icterus bullockii"))))) +
+  geom_text(x=4.5, y=0.2, inherit.aes = F, label = "Centroid comparison", 
+            check_overlap = T, hjust =1, fontface="bold", size=7)
 ```
 
-![**Fig.** Chromatic contrasts (dS),
-vertical.](mainscript_files/figure-gfm/unnamed-chunk-5-1.png)
+![**Fig 6.** Chromatic contrasts (dS),
+vertical](mainscript_files/figure-gfm/unnamed-chunk-1-1.png)
 
 ``` r
-ggsave("chromatic_contrast.png", plot = last_plot(), width = 200, height = 120, units = "mm", dpi = 300,  bg = "transparent")
-```
-
-``` r
-# achromatic
-vod2 <- as.data.frame(as.table(vm.orn.dist.achro))
-vod3 <- pivot_wider(vod2, names_from = Var2, values_from = Freq)
-
-ggplot(vod3, aes(x=Var1, y=dL.mean)) +
-  geom_errorbar(aes(ymin = dL.lwr, ymax = dL.upr), width=.6, position = position_dodge(width=1), size=1) +
-  geom_point(position = position_dodge(width=1), size=5) +
-  theme_classic()+ 
-  mytheme +
-  theme(text=element_text(family="sans")) +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  coord_flip() +
-  labs(x="Centroid comparison", y = "Achromatic contrast (\u0394L)") +
-  theme(panel.background = element_rect(fill = "transparent"), # bg of the panel
-    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-    panel.grid.major = element_blank(), # get rid of major grid
-    panel.grid.minor = element_blank(), # get rid of minor grid
-    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-    legend.box.background = element_rect(fill = "transparent"))
-```
-
-![**Fig.** Achromatic contrasts (dS),
-vertical.](mainscript_files/figure-gfm/unnamed-chunk-6-1.png)
-
-``` r
-ggsave("achromatic_contrast.png", plot = last_plot(), width = 200, height = 120, units = "mm", dpi = 300,  bg = "transparent")
-```
-
-### Convert color distances to XYZ coordinates
-
-``` r
-vismod.orn.cc <- jnd2xyz(vismod.orn.dist, ref1 = "l", axis1 = c(1, 0, 0), ref2 = NULL)
-plot(vismod.orn.cc, theta=55, phi=25, col=spec2rgb(allspec.orn.avg))
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
-
-``` r
-jndplot(vismod.orn.cc, theta=55, phi=25, col=spec2rgb(allspec.orn.avg), arrow.labels = TRUE)
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
-
-<br>
-
-## Test for differences in groups
-
-  - Are the samples statistically separate in color space?
-
-<https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/beheco/29/3/10.1093_beheco_ary017/1/ary017_suppl_supplementary_material.html?Expires=1614112080&Signature=oDIUd-WkV00PmIsMMzpiW6mE6w0d0vJhS~Qly7ck5B7mReHRnnEVBmzzipJMN~sLsXOgoZx-yhj7fEPu6~7YARBU0DdVht7BhU2wNLd~upjxfiqnaoNhPtJqQ9NcYIEGR92pXG3y15XVojmhpHK9GnWlgty5-JJN5Cyck5mNXq6m~-OcQrpJEDwxtlikhRsC9NykQsIb4lN0qn1XZNh7I6fYjzDyqfAU8DZcvkXCOz0f419HmGax~nMZi7HmPM4qLQPCtyYJlDCgCE1tW-YyYwoTN9Y~nCLE4k28qFgofFSrNfIvGdq4X1SzEGkzSaAo3YlbpguAB7orp-pGPBRQzw__&Key-Pair-Id=APKAIE5G5CRDK6RD3PGA>
-
-1)  Using *distance-based PERMANOVA* (Maia & White 2018): using `adonis`
-    fx from R package `vegan` (distance PERMANOVA)
-
-<!-- end list -->
-
-``` r
-library(vegan)
-library(MCMCglmm)
-library(RColorBrewer)
-library(biotools)
-
-mat <- dist(coldist2mat(vismod.orn.dist)[['dS']])
-# group <- substring(rownames(as.matrix(mat)), 1, 1)
-# use at.orn instead as a grouping factor
-
-#### Test for separation among groups
-# test assumption of homogeneity of variances
-bdisp <- betadisper(mat, cate, type='centroid')
-anova(bdisp) #0.01229 * 
-# Groups have unequal variances, which can influence the results of the PERMANOVA. 
-
-TukeyHSD(bdisp) # only sig for Baltmod-Balthist and Bullmod-Balthist
-
-pmanova <- adonis(mat~cate)
-pmanova
-#Permutation: free
-#Number of permutations: 999
-
-#           Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)    
-#cate        4    2481.2  620.31  10.783 0.2745  0.001 ***
-#Residuals 114    6557.9   57.53         0.7255           
-#Total     118    9039.1                 1.0000           
-```
-
-Testing for above-threshold mean differences between groups: \[done\] We
-will use a bootstrap approach to consider the uncertainty on the mean
-difference between groups when comparing it to a threshold value of 1
-JND.
-
-``` r
-# vm.orn.dist <- bootcoldist(vismod.orn, by = cate, n = c(1,2,2,4), weber=0.1, achromatic = FALSE)
-
-#vm.orn.dist
-```
-
-2)  On XYZ coordinates, apply a MANOVA test (Cartesian MANOVA)
-
-`vismod.orn.cc` \<- jnd2xyz(vismod.orn.dist, ref1 = “l”, axis1 = c(1, 0,
-0), ref2 = NULL)
-
-``` r
-plot(vismod.orn.cc, col=c("red", "blue", "yellow", "black", "green", "orange"), cex=1.5) 
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
-
-``` r
-# change color palette
-
-#### Test for separation among groups
-# Perform Box's M-test for homogeneity of variances to test the assumption of equal covariances
-
-boxM(vismod.orn.cc[,c('x', 'y', 'z')], cate)
-```
-
-    ## 
-    ##  Box's M-test for Homogeneity of Covariance Matrices
-    ## 
-    ## data:  vismod.orn.cc[, c("x", "y", "z")]
-    ## Chi-Sq (approx.) = 36.659, df = 24, p-value = 0.0473
-
-``` r
-# Chi-Sq (approx.) = 36.659, df = 24, p-value = 0.0473
-
-# all groups have equal covariances
-
-#### run MANOVA on cartesian coordinates
-summary(manova(lm(cbind(x,y,z)~cate, data = vismod.orn.cc)))
-```
-
-    ##            Df  Pillai approx F num Df den Df    Pr(>F)    
-    ## cate        4 0.91818    12.57     12    342 < 2.2e-16 ***
-    ## Residuals 114                                             
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-``` r
-#           Df Pillai approx F num Df den Df    Pr(>F)    
-#at.orn      4 0.91818    12.57     12    342 < 2.2e-16 ***
-```
-
-  - Is this separation perceptually discriminable?
-
-\-\> Estimate distance in color space between-group geometric means
-rather than through average pairwise distance or volume-overlap based
-This is `vm.orn.dist`
-
-## Color space
-
-Though these models do not account for receptor noise (and thus do not
-allow an estimate of JNDs), they presents several advantages. First,
-they make for a very intuitive representation of colour points
-accounting for attributes of the colour vision of the signal receiver.
-Second, they allow for the calculation of several interesting variables
-that represent colour. e.g. hue can be estimated from the angle of the
-point relative to the xy plane (blue-green-red) and the z axis (UV);
-saturation can be estimated as the distance of the point from the
-achromatic centre.
-
-``` r
-# original
-vismod.orn <- vismodel(allspec.orn.avg,
-  visual = "avg.uv", achromatic = "bt.dc", #blue tit double cone
-  illum = "D65", relative = FALSE)
-
-# adjust parameters for color space model, bright viewing conditions and relative = T
-vismod.orn2 <- vismodel(allspec.orn.avg, visual = "avg.uv", achromatic = "bt.dc", scale = 10000, relative = TRUE)
-
-# create color space
-tetra.orn2 <- colspace(vismod.orn2, space = "tcs") #
-head(tetra.orn2)
-# r.vec is the measure of saturation
-
-# add attribute data
-torn <- as.data.frame(tetra.orn2)
-tcat <- att %>%  # created from above
-  dplyr::select(ID, cat, date)
-  
-
-torn$ID <- tcat$ID
-torn$cat <- tcat$cat
-torn$date <- tcat$date
-torn$sp <- gsub("\\_.*", "", torn$cat)
-torn$type <- gsub(".*_", "", torn$cat)
-
-torn2 <- torn %>% 
-  dplyr::select(ID, cat, sp, type, date, r.vec)
-```
-
-#### split by species
-
-``` r
-#### like figures before
-bacomp <- list(c("Balt_ref", "Balt_hist"), c("Balt_hist", "Balt_mod"), c("Balt_ref", "Balt_mod"))
-bucomp <- list(c("Bull_ref", "Bull_hist"), c("Bull_hist", "Bull_mod"), c("Bull_ref", "Bull_mod"))
-
-# Bullocks
-toba <- torn2[which(torn2$sp == "Balt"),]
-tobu <- torn2[which(torn2$sp == "Bull"),]
-  
-ggplot(tobu, aes(x=cat, y=r.vec)) +
-  stat_boxplot(aes(x=cat, y=r.vec), geom="errorbar", position = position_dodge(width=.75), width=.5) +
-  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
-  theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, method = "t.test", label.y = c(0.41, 0.42, 0.43),label = "p.signif", size = 6) +
-  mytheme +
-  labs(y = "Saturation") +
-  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist","Bull_mod"), labels=c("Reference","Historic", "Modern"))
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-
-``` r
-ggsave("bu_orn_saturation_cat.tiff", plot = ggplot2::last_plot(), width=150, height=180, units="mm", dpi=300)
-```
-
-<br>
-
-# Tetrahedral plot
-
-``` r
-### plots
-plot(tetra.orn2, col = spec2rgb(allspec.orn.avg), perspective = TRUE,  pch = 21, cex=0.5, zoom=1, phi=30)
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
-
-``` r
-# orange points in a tetrachromatic colorspace, as modelled according to blue tit visual system
-```
-
-<br>
-
-# PCA
-
-``` r
-library(ggfortify)
-library(cluster)
-library(grid)
-library(gridExtra)
-
-spec.bin <- procspec(allspec.orn.avg, opt = c("bin", "center"))
-colnames(spec.bin) <- allcategory 
-
-spec.bin <- t(spec.bin) 
-spec.bin <- spec.bin[-1, ]
-pca1 <- prcomp(spec.bin, scale. = TRUE)
-
-summary(pca1) #PC1 explains 65% of the variation in spectral shape and describes the ratio of short to long wavelengths reflected
-```
-
-    ## Importance of components:
-    ##                          PC1    PC2     PC3     PC4     PC5     PC6     PC7
-    ## Standard deviation     3.642 2.1338 1.22413 0.64146 0.40638 0.21515 0.15274
-    ## Proportion of Variance 0.663 0.2276 0.07492 0.02057 0.00826 0.00231 0.00117
-    ## Cumulative Proportion  0.663 0.8907 0.96561 0.98618 0.99444 0.99675 0.99792
-    ##                            PC8     PC9    PC10    PC11    PC12    PC13    PC14
-    ## Standard deviation     0.14455 0.08444 0.06524 0.05146 0.04769 0.03835 0.03104
-    ## Proportion of Variance 0.00104 0.00036 0.00021 0.00013 0.00011 0.00007 0.00005
-    ## Cumulative Proportion  0.99897 0.99932 0.99954 0.99967 0.99978 0.99985 0.99990
-    ##                           PC15    PC16    PC17    PC18     PC19     PC20
-    ## Standard deviation     0.02945 0.02171 0.01962 0.01271 0.006946 0.002864
-    ## Proportion of Variance 0.00004 0.00002 0.00002 0.00001 0.000000 0.000000
-    ## Cumulative Proportion  0.99995 0.99997 0.99999 1.00000 1.000000 1.000000
-
-``` r
-ao <- as.character(cate)
-sb <- cbind(spec.bin, ao)
-
-#autoplot(pca1, data=sb, colour="ao")
-
-autoplot(pca1, data=sb, colour="ao", frame=TRUE, frame.type = "norm")
-```
-
-![](mainscript_files/figure-gfm/PCA-1.png)<!-- -->
-
-Subset for better visualization
-
-``` r
-####
-## Remove for better visualization
-### change names for subsetting
-soa <- allspec.orn.avg
-colnames(soa) <- allcategory
-```
-
-### Within Baltimore, historic vs modern
-
-``` r
-baltmodhist <- subset(soa, c("Balt_mod", "Balt_hist")) # n = 40 but names changed? 
-
-spec.bin.bamh <- procspec(baltmodhist, opt = c("bin", "center"))
-
-spec.bin.bamh <- t(spec.bin.bamh) 
-spec.bin.bamh <- spec.bin.bamh[-1, ]
-pca.bamh <- prcomp(spec.bin.bamh, scale. = TRUE)
-
-summary(pca.bamh) # 71.7% of variation
-
-bamh <- as.character(colnames(baltmodhist))
-bamh <- gsub("\\..*", "", bamh) # remove everything after "."
-bamh <- bamh[-1]
-bamh1 <- ifelse(bamh == "Balt_hist", "Historic", "Modern") 
-sb.bamh <- cbind(spec.bin.bamh, bamh1) 
-
-pca.ba <- autoplot(pca.bamh, data=sb.bamh, colour = "bamh1", shape = "bamh1", frame=TRUE, frame.type = "norm", size = 2) + 
-  theme_classic() +
-  mytheme +
-  scale_color_manual(values = pal.ba) +
-  scale_fill_manual(values = pal.ba) +
-  labs(fill="Specimen type", color="Specimen type", shape = "Specimen type")
-ggsave("pca_baltimore_mod_hist.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-### Within Bullock’s, historic vs modern
-
-``` r
-bullmodhist <- subset(soa, c("Bull_mod", "Bull_hist")) # n = 40 but names changed? 
-
-spec.bin.bumh <- procspec(bullmodhist, opt = c("bin", "center"))
-
-spec.bin.bumh <- t(spec.bin.bumh) 
-spec.bin.bumh <- spec.bin.bumh[-1, ]
-pca.bumh <- prcomp(spec.bin.bumh, scale. = TRUE)
-
-summary(pca.bumh) # 55.5% of variation
-
-bumh <- as.character(colnames(bullmodhist))
-bumh <- gsub("\\..*", "", bumh) # remove everything after "."
-bumh <- bumh[-1]
-bumh1 <- ifelse(bumh == "Bull_hist", "Historic", "Modern") 
-sb.bumh <- cbind(spec.bin.bumh, bumh1) 
-
-
-pca.bu <- autoplot(pca.bumh, data = sb.bumh, colour = "bumh1", shape = "bumh1", frame = TRUE, frame.type = "norm", size = 2) + 
-  theme_classic() +
-  mytheme +
-  scale_color_manual(values = pal.bu) +
-  scale_fill_manual(values = pal.bu) +
-  labs(fill = "Specimen type", color = "Specimen type", shape = "Specimen type")
-
-ggsave("pca_bullocks_mod_hist.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-Plot together
-
-``` r
-label <- autoplot(pca.bumh, data = sb.bumh, shape = "bumh1", frame = TRUE, frame.type = "norm", size = 1.99) +
-  labs(shape = "Specimen type") +
-  theme_classic() +
-  mytheme 
-
-
-pg.pca <- plot_grid(
-  pca.bu + theme(legend.position="none"),
-  pca.ba + theme(legend.position="none"),
-  align = 'vh',
-  labels = c("A", "B"),
-  hjust = -1,
-  nrow = 1, label_size = 20
-)
-
-
-leg.pca <- get_legend(label + theme(legend.box.margin = margin(0,0,0,12)))
-
-plot_grid(pg.pca, leg.pca, rel_widths = c(5, 1))
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
-
-``` r
-ggsave("Figure_pca.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
-```
-
-### Within Bullocks, all 3
-
-``` r
-bullmodhistref <- subset(soa, c("Bull_mod", "Bull_hist", "Bull_ref")) # n = 40 but names changed? 
-
-spec.bin.bumhr <- procspec(bullmodhistref, opt = c("bin", "center"))
-
-spec.bin.bumhr <- t(spec.bin.bumhr) 
-spec.bin.bumhr <- spec.bin.bumhr[-1, ]
-pca.bumhr <- prcomp(spec.bin.bumhr, scale. = TRUE)
-
-bumhr <- as.character(colnames(bullmodhistref))
-bumhr <- gsub("\\..*", "", bumhr) # remove everything after "."
-bumhr <- bumhr[-1]
-sb.bumhr <- cbind(spec.bin.bumhr, bumhr) 
-
-autoplot(pca.bumhr, data=sb.bumhr, colour = "bumhr", frame=TRUE, frame.type = "norm") + 
-  theme_classic() +
-  mytheme +
-  labs(fill="Specimen type", color="Specimen type")
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
-
-``` r
-ggsave("pca_bullocks_all.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-## Contrast between species
-
-### Historic
-
-``` r
-## Historic
-intercolorhist <- subset(soa, c("Bull_hist", "Balt_hist")) # n = 40 but names changed? 
-
-spec.bin.ich <- procspec(intercolorhist, opt = c("bin", "center"))
-
-spec.bin.ich <- t(spec.bin.ich) 
-spec.bin.ich <- spec.bin.ich[-1, ]
-pca.ich <- prcomp(spec.bin.ich, scale. = TRUE)
-
-ich <- as.character(colnames(intercolorhist))
-ich <- gsub("\\..*", "", ich) # remove everything after "."
-ich <- ich[-1]
-ich1 <- ifelse(ich == "Balt_hist", "Baltimore", "Bullock's")
-sb.ich <- cbind(spec.bin.ich, ich1) 
-
-pca.hist <- autoplot(pca.ich, data = sb.ich, colour = "ich1", frame=TRUE, frame.type = "norm", size = 2) + 
-  theme_classic() +
-  mytheme +
-  labs(fill="Species", color="Species") +
-  scale_shape_manual(values = c(16, 16), limits = c("Bullock's", "Baltimore")) +
-  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
-  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
-
-ggsave("pca_inter_historic.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-### Modern
-
-``` r
-intercolormod <- subset(soa, c("Bull_mod", "Balt_mod")) # n = 40 but names changed? 
-
-spec.bin.icm <- procspec(intercolormod, opt = c("bin", "center"))
-
-spec.bin.icm <- t(spec.bin.icm) 
-spec.bin.icm <- spec.bin.icm[-1, ]
-pca.icm <- prcomp(spec.bin.icm, scale. = TRUE)
-
-icm <- as.character(colnames(intercolormod))
-icm <- gsub("\\..*", "", icm) # remove everything after "."
-icm <- icm[-1]
-icm1 <- ifelse(icm == "Balt_mod", "Baltimore", "Bullock's")
-sb.icm <- cbind(spec.bin.icm, icm1) 
-
-
-pca.mod <- autoplot(pca.icm, data = sb.icm, shape = "icm1", colour = "icm1", frame=TRUE, frame.type = "norm", size = 2) + 
-  theme_classic() +
-  mytheme +
-  labs(fill="Species", color="Species") +
-  scale_shape_manual(values = c(17, 17), limits = c("Bullock's", "Baltimore")) +
-  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
-  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
-pca.mod
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
-
-``` r
-ggsave("pca_inter_modern.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-Plot together
-
-``` r
-label1 <- autoplot(pca.icm, data = sb.icm, shape = "icm1", colour = "icm1", frame=TRUE, frame.type = "norm", size = 1.99) + 
-  theme_classic() +
-  mytheme +
-  labs(fill="Species", color="Species", shape = "Species") +
-  scale_shape_manual(values = c(4, 4), limits = c("Bullock's", "Baltimore")) +
-  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
-  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
-label1
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
-
-``` r
-pg.pca1 <- plot_grid(
-  pca.hist + theme(legend.position="none"),
-  pca.mod + theme(legend.position="none"),
-  align = 'vh',
-  labels = c("C", "D"),
-  hjust = -1,
-  nrow = 1, label_size = 20
-)
-
-
-leg.pca1 <- get_legend(label1 + theme(legend.box.margin = margin(0,0,0,12)))
-
-plot_grid(pg.pca1, leg.pca1, rel_widths = c(5, 1))
-```
-
-![](mainscript_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
-
-``` r
-ggsave("Figure_pca1.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
+ggsave("chromatic_contrast.png", plot = last_plot(), width = 200, height = 80, 
+       units = "mm", dpi = 300,  bg = "transparent")
 ```

@@ -3,7 +3,7 @@ title: "Main code"
 output: 
   github_document:
     toc: true
-date: "6/18/2021"
+date: "3/23/2021"
 editor_options: 
   chunk_output_type: console
 ---
@@ -28,17 +28,20 @@ Each specimen has 5 patches measured (2 black 3 orange) and each patch is measur
 ### Load libraries
 Using `pavo` as main, rest as data manipulation & organization
 ```{r Load libraries, message = FALSE, results = "hide", warning = FALSE}
-library(pavo)
+# data tidying
 library(data.table)
 library(readxl)
 library(tidyverse)
 library(stringr)
 library(knitr)
 library(car)
+# figures
 library(ggpubr)
 library(ggpmisc)
-library(lme4)
 library(cowplot)
+#analyses
+library(pavo)
+library(lme4)
 ```
 
 Set ggplot themes for figures
@@ -54,8 +57,7 @@ mytheme <- theme(
 
 pal1 <- c("#ffa600", "#58508d")
 pal2 <- c("#58508d", "#ffa600")
-pal.bu <- c("#ffc966", "#cc8400")
-pal.ba <- c("#9a96ba", "#3d3862")
+pal3 <- c("#635e50", "#e59500")
 ```
 
 # Import data
@@ -87,6 +89,7 @@ spec <- getspec("allspec", ext = "txt", lim = c(300, 700))  # 1485 files
 spec <- as.rspec(spec)
 
 burke <- getspec("burke", ext = "txt", lim = c(300, 700)) #300 files
+burke_raw <- getspec("burke", ext = "txt", lim = c(300, 700)) #300 files
 ```
 
 ## Visually check spectra
@@ -94,8 +97,15 @@ burke <- getspec("burke", ext = "txt", lim = c(300, 700)) #300 files
 plot(spec)
 ```
 
+Check spectra of Burke specimens 
 ```{r See burke spectra, message = FALSE, fig.cap = "**Fig 2b.** Spectra of UWBM specimens measured in 2021."}
 plot(burke)
+
+plot(burke_raw)
+
+png("burke_raw_spec.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+plot(burke_raw, col = spec2rgb(burke_raw), cex.lab = 1.5, cex.axis = 1.5)
+dev.off()
 ```
 
 
@@ -126,6 +136,10 @@ allspec <- merge(spec, burke)
 
 ```{r See new burke spectra, message = FALSE, fig.cap = "**Fig 2c.** Spectra of UWBM specimens"}
 plot(burke)
+
+png("burke_corrected_spec.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+plot(burke, col = spec2rgb(burke_raw), cex.lab = 1.5, cex.axis = 1.5)
+dev.off()
 ```
 
 <br>
@@ -214,7 +228,9 @@ colnames(asoa) <- allcategory
 
 aggplot(asoa, by = allcategory, FUN.center = median, ylim = c(0, 65),
         alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
-legend(290, 67, legend = c("BA historic", "BA modern", "BU historic", "BU modern", "BU reference"), col = c("red", "royalblue", "green", "purple", "orange", "yellow"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent")
+legend(290, 67, legend = c("BA historic", "BA modern", "BU historic", "BU modern", "BU reference"),
+       col = c("red", "royalblue", "green", "purple", "orange", "yellow"), lty=1, cex=1.2,
+       box.lty=0, lwd=2, bg="transparent")
 ```
 
 
@@ -226,9 +242,7 @@ setDT(allsum.orn, keep.rownames = TRUE)[]
 
 # convert MVZ names to be consistent with the specimen attribute data
 allsum.orn$rn <- gsub("MVZ_", "MVZ.", allsum.orn$rn)
-
 allid.orn <- do.call(rbind, strsplit(allsum.orn$rn, "\\_"))[, 1]
-
 allsum.orn$ID <- allid.orn #specimen ID
 
 # change UWBM to be consistent with the attribute data table
@@ -242,7 +256,9 @@ alldat.orn <- allsum.orn %>%
 alldat.orn$sp <- gsub("\\_.*", "", alldat.orn$cat)
 
 # Rename species category for future plotting
-alldat.orn$spc <- factor(alldat.orn$sp, levels = c("Bull", "Balt"), labels = c("Bullock's", "Baltimore"))
+alldat.orn$spc <- factor(alldat.orn$sp, 
+                         levels = c("Bull", "Balt"), 
+                         labels = c("Bullock's", "Baltimore"))
 ```
 
 #### Spectra split by species 
@@ -252,6 +268,9 @@ alldat.orn$spc <- factor(alldat.orn$sp, levels = c("Bull", "Balt"), labels = c("
 asoa.ba <- subset(asoa, "Balt")
 asoa.bu <- subset(asoa, "Bull")
 
+#remove bull-ref for now
+asoa.bu2 = select(asoa.bu, 1:41)
+
 
 allcat <- as.data.frame(allcategory)
 allcat2 <- allcat %>% 
@@ -259,22 +278,26 @@ allcat2 <- allcat %>%
 colnames(asoa.ba) <- allcat2$allcategory
 
 allcat3 <- allcat %>% 
-  filter(allcategory =="wl" | allcategory == "Bull_hist" | allcategory == "Bull_mod" | allcategory == "Bull_ref")
-colnames(asoa.bu) <- allcat3$allcategory
+  filter(allcategory =="wl" | allcategory == "Bull_hist" | allcategory == "Bull_mod")
+colnames(asoa.bu2) <- allcat3$allcategory
+
 
 # plot & save
-
-#png("all_spectra_bullocks.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
-aggplot(asoa.bu, by = allcat3$allcategory, FUN.center = median, ylim = c(0, 65),
+png("all_spectra_bullocks.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+aggplot(asoa.bu2, by = allcat3$allcategory, FUN.center = median, ylim = c(0, 65),
         alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
-legend(290, 67, legend = c("Historic", "Modern", "Reference"), col = c("red", "royalblue", "green"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Bullock's oriole")
-#dev.off()
+legend(290, 67, legend = c("Historic", "Contemporary"), col = c("red", "royalblue"), 
+       lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Bullock's oriole")
+dev.off()
 
-#png("all_spectra_baltimore.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+
+
+png("all_spectra_baltimore.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
 aggplot(asoa.ba, by = allcat2$allcategory, FUN.center = median, ylim = c(0, 65),
         alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
-legend(290, 67, legend = c("Historic", "Modern"), col = c("red", "royalblue"), lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Baltimore oriole")
-#dev.off()
+legend(290, 67, legend = c("Historic", "Contemporary"), col = c("red", "royalblue"), 
+       lty=1, cex=1.2, box.lty=0, lwd=2, bg="transparent", title = "Baltimore oriole")
+dev.off()
 ```
 
 
@@ -291,13 +314,10 @@ allspec.blk.avg <- aggspec(allspec.blk, by = 2, FUN = mean, trim = FALSE)
 allsum.blk <- summary(allspec.blk.avg)
 setDT(allsum.blk, keep.rownames = TRUE)[]
 
-# convert MVZ names to be consistent with the specimen attribute data
+# convert MVZ and UWBM names to be consistent with the specimen attribute data
 allsum.blk$rn <- gsub("MVZ_", "MVZ.", allsum.blk$rn)
-
 allid.blk <- do.call(rbind, strsplit(allsum.blk$rn, "\\_"))[, 1]
-
 allsum.blk$ID <- allid.blk #specimen ID
-
 allsum.blk$ID <- gsub("UWBM", "UWBM.BU", allsum.blk$ID)
 
 
@@ -319,8 +339,6 @@ alldat.blk$spc <- factor(alldat.blk$sp, levels = c("Bull", "Balt"), labels = c("
 # Colorimetric variables
 List of variables of interest (from Pavo package; references available there)
  - `B1`: total brightness; sum of relative reflectance over entire spectral range (area under the curve) 
- - `B2`: mean brightness; mean relative reflectance over entire spectral range 
- - `S1`: chroma; relative contribution of a spectral range to the total brightness (B1) 
  - `S9`: carotenoid chroma; (R700 - R450)/R700 
  - `H3`: hue/wavelength at Rmid; sensitive to noisy spectra
 
@@ -329,7 +347,6 @@ Orange patches
 ```{r Boxplot across specimens - orange}
 dat <- alldat.orn
 plot(B1 ~ cat, data = dat, ylab = "Total brightness (B1)", xlab = "Specimen category")
-plot(B2 ~ cat, data = dat, ylab = "Mean brightness (B2)", xlab = "Specimen category") # same as above, just different y axis
 plot(S9 ~ cat, data = dat, ylab = "Carotenoid chroma (S9)", xlab = "Specimen category")
 plot(H3 ~ cat, data = dat, ylab = "Hue (H3)", xlab = "Specimen category")
 ```
@@ -399,8 +416,10 @@ ggplot(alldat.orn, aes(x = date, y = B1, shape = spc, color = spc)) +
   stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Total brightness (B1)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+                                            stat(..r.squared..), stat(..p.value..))), 
+                  parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Total brightness (B1)", x = "Collection date", 
+       color = "Species", fill = "Species", shape = "Species") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
 ```
@@ -428,8 +447,10 @@ ggplot(alldat.orn, aes(x = date, y = S9, shape = spc, color = spc)) +
   stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+                                            stat(..r.squared..), stat(..p.value..))), 
+                  parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Carotenoid chroma (S9)", x = "Collection date", 
+       color = "Species", fill = "Species", shape = "Species") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
 ```
@@ -457,8 +478,10 @@ ggplot(alldat.orn, aes(x = date, y = H3, shape = spc, color = spc)) +
   stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Orange patches only", y = "Hue (H3)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+                                            stat(..r.squared..), stat(..p.value..))), 
+                  parse = TRUE) + 
+  labs(title = "Orange patches only", y = "Hue (H3)", x = "Collection date", 
+       color = "Species", fill = "Species", shape = "Species") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
 ```
@@ -480,8 +503,10 @@ ggplot(alldat.blk, aes(x = date, y = B1, shape = spc, color = spc)) +
   stat_fit_glance(method = "lm", label.x = "right", label.y = "bottom",
                         method.args = list(formula = y ~ x), size = 5, 
                         aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3f',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(title = "Black patches only", y = "Brightness (B1)", x = "Collection date", color = "Species", fill = "Species", shape = "Species") +
+                                            stat(..r.squared..), stat(..p.value..))), 
+                  parse = TRUE) + 
+  labs(title = "Black patches only", y = "Brightness (B1)", x = "Collection date", 
+       color = "Species", fill = "Species", shape = "Species") +
   scale_color_manual(values = pal1) +
   scale_fill_manual(values = pal1)
 ```
@@ -494,184 +519,157 @@ ggplot(alldat.blk, aes(x = date, y = B1, shape = spc, color = spc)) +
 Compare reference vs. hybrid zone
 
 ```{r H2. Reference vs hybrid zone}
-# Set a new variable indicating hybrid zone or outside
-alldat.orn$loc <- ifelse(alldat.orn$cat == "Bull_ref", "Outside", "Hybrid zone") 
-
-# Separate Bullock's
-bullocks <- alldat.orn[which(alldat.orn$sp == "Bull"),]
+# Select categories for comparison 
+compare <- alldat.orn[which(alldat.orn$cat == "Bull_mod" | alldat.orn$cat == "Bull_hist" | alldat.orn$cat == "Balt_mod" | alldat.orn$cat == "Balt_hist"),]
 
 # List for comparisons
-bucomp <- list(c("Bull_ref", "Bull_hist"), c("Bull_hist", "Bull_mod"), c("Bull_ref", "Bull_mod"))
-
-
-#################
-# 11.11.2021
-# Separate Bullock's mod/hist and Baltimore mode/hist
-update <- alldat.orn[which(alldat.orn$cat == "Bull_mod" | alldat.orn$cat == "Bull_hist" | alldat.orn$cat == "Balt_mod" | alldat.orn$cat == "Balt_hist"),]
-
-# List for comparisons
-updatelist <- list(c("Bull_hist", "Bull_mod"), c("Balt_hist", "Balt_mod"), c("Bull_hist", "Balt_hist"), c("Bull_mod", "Balt_mod"))
+comparelist <- list(c("Bull_hist", "Bull_mod"), c("Balt_hist", "Balt_mod"))
 
 
 ############
-# do black patches
-update1 <- alldat.blk[which(alldat.blk$cat == "Bull_mod" | alldat.blk$cat == "Bull_hist" | alldat.blk$cat == "Balt_mod" | alldat.blk$cat == "Balt_hist"),]
-
-# List for comparisons
-updatelist1 <- list(c("Bull_hist", "Bull_mod"), c("Balt_hist", "Balt_mod"), c("Bull_hist", "Balt_hist"), c("Bull_mod", "Balt_mod"))
+# for black patches
+compare1 <- alldat.blk[which(alldat.blk$cat == "Bull_mod" | alldat.blk$cat == "Bull_hist" | alldat.blk$cat == "Balt_mod" | alldat.blk$cat == "Balt_hist"),]
 ```
 
 
-1. Brightness
+1. Brightness boxplots
 ```{r compare across bullocks groups - brightness, message = FALSE, warning = FALSE}
-# Boxplots
-h2a <- ggplot(bullocks, aes(x = cat, y = B1)) +
-  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
-  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
-  theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(11900, 11600, 12200), method = "t.test", label = "p.signif", size = 6) + 
-  mytheme +
-  labs(y = "Total brightness (B1)") +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference", "Historic", "Modern")) +
-  ylim(7500,12510)
-
-
-#####
-h2a1 <- ggplot(update, aes(x = cat, y = B1, fill = sp)) +
-  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+b1orn <- ggplot(compare, aes(x = cat, y = B1, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", 
+               position = position_dodge(width = .75), width = .5) +
   geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
-  theme_classic()+ 
-  stat_compare_means(comparisons = updatelist, method = "t.test", label = "p.signif", size = 6) + 
+  stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) +
+  theme_classic()+
   mytheme +
   labs(y = "Total brightness (B1)") +
-  scale_fill_manual(values = pal1, name = "Species", limits = c("Bull", "Balt"), labels = c(expression(italic("Icterus bullockii")), expression(italic("Icterus galbula")))) +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), labels = c("Historic", "Modern","Historic", "Modern")) +
-  ylim(7500,12600) +
-  theme(legend.text.align = 0)
+  scale_fill_manual(values = pal1, name = "Species", 
+                    limits = c("Bull", "Balt"), 
+                    labels = c(expression(italic("Icterus bullockii")), 
+                               expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", 
+                   limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
+                   labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
+  theme(legend.text.align = 0, axis.text.x = element_text(angle = 45, hjust=1))
 
-h2a1
 
-### black
-h2blk <- ggplot(update1, aes(x = cat, y = B1, fill = sp)) +
-  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+# black
+b1blk <- ggplot(compare1, aes(x = cat, y = B1, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = B1), geom = "errorbar", 
+               position = position_dodge(width = .75), width = .5) +
   geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) + 
   theme_classic()+ 
-  stat_compare_means(comparisons = updatelist1, method = "t.test", label = "p.signif", size = 6) + 
   mytheme +
   labs(y = "Total brightness (B1)") +
-  scale_fill_manual(values = pal1, name = "Species", limits = c("Bull", "Balt"), labels = c(expression(italic("Icterus bullockii")), expression(italic("Icterus galbula")))) +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), labels = c("Historic", "Modern","Historic", "Modern")) +
-  theme(legend.text.align = 0)
-h2blk
-ggsave("Figure_h2_blk.png", plot=h2blk, width=200, height=125, units="mm", dpi=600, scale=T)
+  scale_fill_manual(values = pal1, name = "Species", 
+                    limits = c("Bull", "Balt"), 
+                    labels = c(expression(italic("Icterus bullockii")), 
+                               expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", 
+                   limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
+                   labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
+  theme(legend.text.align = 0) +
+  ylim(900,4000)
+b1blk
+
+ggsave("Figure4.png", plot=b1blk, width=200, height=125, units="mm", dpi=600, scale=T)
 ```
 
 2. Chroma
 ```{r compare across bullocks groups - chroma, message = FALSE, warning = FALSE}
-# Boxplots
-h2b <- ggplot(bullocks, aes(x = cat, y = S9)) +
-  stat_boxplot(aes(x = cat, y = S9), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
-  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
-  theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(0.96, 0.966, 0.972), method = "t.test", label = "p.signif", size = 6) + 
-  mytheme +
-  labs(y = "Caronetoid chroma (S9)") +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference","Historic", "Modern")) +
-  ylim(0.90,0.973)
-
-#############
-h2b1 <- ggplot(update, aes(x = cat, y = S9, fill = sp)) +
-  stat_boxplot(aes(x = cat, y = S9), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+s9orn <- ggplot(compare, aes(x = cat, y = S9, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = S9), geom = "errorbar", 
+               position = position_dodge(width = .75), width = .5) +
   geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) + 
   theme_classic()+ 
-  stat_compare_means(comparisons = updatelist, method = "t.test", label = "p.signif", size = 6) + 
   mytheme +
   labs(y = "Caronetoid chroma (S9)") +
-  scale_fill_manual(values = pal1, name = "Species", limits = c("Bull", "Balt"), labels = c(expression(italic("Icterus bullockii")), expression(italic("Icterus galbula")))) +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), labels = c("Historic", "Modern","Historic", "Modern")) +
-  theme(legend.text.align = 0)
-h2b1
+  scale_fill_manual(values = pal1, name = "Species", 
+                    limits = c("Bull", "Balt"), 
+                    labels = c(expression(italic("Icterus bullockii")), 
+                               expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", 
+                   limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
+                   labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
+  theme(legend.text.align = 0, axis.text.x = element_text(angle = 45, hjust=1))
+s9orn
 ```
 
 
 3. Hue
-
 ```{r compare across bullocks groups - hue, message = FALSE, warning = FALSE}
-# Boxplots
-h2c <- ggplot(bullocks, aes(x = cat, y = H3)) +
-  stat_boxplot(aes(x = cat, y = H3), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
-  geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black", fill = "#fa8500") +
-  theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, label.y = c(569, 567, 571), method = "t.test", label = "p.signif", size = 6) + 
-  mytheme +
-  labs(y = "Hue (H3)") +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_ref", "Bull_hist", "Bull_mod"), labels = c("Reference","Historic", "Modern")) +
-  ylim(537,574)
-
-# remove ref
-h2c1 <- ggplot(update, aes(x = cat, y = H3, fill = sp)) +
-  stat_boxplot(aes(x = cat, y = H3), geom = "errorbar", position = position_dodge(width = .75), width = .5) +
+h3orn <- ggplot(compare, aes(x = cat, y = H3, fill = sp)) +
+  stat_boxplot(aes(x = cat, y = H3), geom = "errorbar", 
+               position = position_dodge(width = .75), width = .5) +
   geom_boxplot(outlier.size = 1.5, position = position_dodge(width = .75), col = "black") +
+  stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) + 
   theme_classic()+ 
-  stat_compare_means(comparisons = updatelist, method = "t.test", label = "p.signif", size = 6) + 
   mytheme +
   labs(y = "Hue (H3)") +
-  scale_fill_manual(values = pal1, name = "Species", limits = c("Bull", "Balt"), labels = c(expression(italic("Icterus bullockii")), expression(italic("Icterus galbula")))) +
-  scale_x_discrete(name = "Specimen type", limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), labels = c("Historic", "Modern","Historic", "Modern")) +
-  theme(legend.text.align = 0, legend.position = c(0.7, 0.15), legend.background = element_rect(linetype="solid", 
-                                  colour ="lightgray")) 
-  
-h2c1
+  scale_fill_manual(values = pal1, name = "Species", 
+                    limits = c("Bull", "Balt"), 
+                    labels = c(expression(italic("Icterus bullockii")), 
+                               expression(italic("Icterus galbula")))) +
+  scale_x_discrete(name = "Specimen type", 
+                   limits = c("Bull_hist", "Bull_mod", "Balt_hist", "Balt_mod"), 
+                   labels = c("Historic", "Contemporary","Historic", "Contemporary")) +
+  theme(legend.text.align = 0, legend.position = c(0.7, 0.15), 
+        legend.background = element_rect(linetype="solid", colour ="lightgray"), 
+        axis.text.x = element_text(angle = 45, hjust=1)) +
+  ylim(530,573)
+
+h3orn 
 ```
 
-
-```{r}
-pg1 <- plot_grid(
-  h2a + theme(legend.position="none"),
-  h2b + theme(legend.position="none"),
-  h2c + theme(legend.position="none"),
-  align = 'vh',
-  labels = c("A", "B", "C"),
-  hjust = -1,
-  nrow = 1, label_size = 16
-)
-
-plot_grid(pg1)
-
-ggsave("Figure_h2.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
-
+Plot all three together
+```{r compare across bullocks groups - all3, message = FALSE, warning = FALSE}
 #########
-pg2 <- plot_grid(
-  h2a1 + theme(legend.position="none"),
-  h2b1 + theme(legend.position="none"),
-  h2c1,
+pg <- plot_grid(
+  b1orn + theme(legend.position="none"),
+  s9orn + theme(legend.position="none"),
+  h3orn,
   align = 'vh',
   labels = c("A", "B", "C"),
   hjust = -1,
   nrow = 1, label_size = 16
 )
 
-plot_grid(pg2)
+plot_grid(pg)
 
-ggsave("Figure_h2_v2.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
+ggsave("Figure3.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
 ```
-
 
 
 <br>
 
 ## H3. Are color changes only in the hybrid zone? 
 
+```{r H3 data setup, message = FALSE, warning = FALSE}
+# Set a new variable indicating hybrid zone or outside
+alldat.orn$loc <- ifelse(alldat.orn$cat == "Bull_ref", "Outside", "Hybrid zone") 
+
+# Separate Bullock's
+bullocks <- alldat.orn[which(alldat.orn$sp == "Bull"),]
+```
+
+
 Linear models
-```{r}
-lm_orn_hz_b1 <- lm(B1 ~ date, data = bullocks[which(bullocks$loc == "Hybrid zone"),])
-summary(lm_orn_hz_b1) # p = 0.142  
+```{r H3 models, message = FALSE, warning = FALSE}
+lm1 <- lm(B1 ~ date*loc, data=bullocks)
+summary(lm1)
+plot(lm1) 
+vif(lm1) 
 
-lm_orn_hz_s9 <- lm(S9 ~ date, data = bullocks[which(bullocks$loc == "Hybrid zone"),])
-summary(lm_orn_hz_s9) # p = 8.99e-05 ***
+lm2 <- lm(S9 ~ date*loc, data=bullocks)
+summary(lm2)
+plot(lm2) 
+vif(lm2)
 
-lm_orn_hz_h3 <- lm(H3 ~ date, data = bullocks[which(bullocks$loc == "Hybrid zone"),])
-summary(lm_orn_hz_h3) # p = 2.04e-05 ***
+lm3 <- lm(H3 ~ date*loc, data=bullocks)
+summary(lm3)
+plot(lm3) 
+vif(lm3)
 ```
 
 #### Plots
@@ -684,31 +682,36 @@ h3a <- ggplot(bullocks, aes(x = date, y = B1, shape = loc, color = loc)) +
   stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", 
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(y = "Total brightness (B1)", x= "Collection date", color = "Location", fill = "Location", shape = "Location") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
+#  stat_fit_glance(method = "lm", 
+#                        method.args = list(formula = y ~ x), size = 5, 
+#                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+#                                            stat(..r.squared..), stat(..p.value..))), 
+#  parse = TRUE) + 
+  labs(y = "Total brightness (B1)", x= "Collection date", color = "Location", 
+       fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal3) +
+  scale_fill_manual(values = pal3)
 
 ################
+# black patches 
+# not in manuscript 
 
 bullblk <- alldat.blk[which(alldat.blk$sp == "Bull"),]
 
 ggplot(bullblk, aes(x = date, y = B1)) +
   geom_point(size = 2) +
-  stat_smooth(method = lm, se = T) +
+  stat_smooth(method = lm, se = T, col="black") +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", 
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
+#  stat_fit_glance(method = "lm", 
+#                        method.args = list(formula = y ~ x), size = 5, 
+#                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+#                                            stat(..r.squared..), stat(..p.value..))),
+#                        parse = TRUE) + 
   labs(y = "Total brightness (B1)", x= "Collection date") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
-ggsave("black_B1_time.png", plot=last_plot(), width=200, height=125, units="mm", dpi=600, scale=T)
+  scale_color_manual(values = pal3) +
+  scale_fill_manual(values = pal3)
+#ggsave("black_B1_time2.png", plot=last_plot(), width=200, height=125, units="mm", dpi=600, scale=T)
 ```
 
 2. Chroma
@@ -718,13 +721,15 @@ h3b <- ggplot(bullocks, aes(x = date, y = S9, shape = loc, color = loc)) +
   stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm",
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(y = "Carotenoid chroma (S9)", x = "Collection date", color = "Location", fill = "Location", shape = "Location") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
+#  stat_fit_glance(method = "lm",
+#                        method.args = list(formula = y ~ x), size = 5, 
+#                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+#                                            stat(..r.squared..), stat(..p.value..))), 
+#                  parse = TRUE) + 
+  labs(y = "Carotenoid chroma (S9)", x = "Collection date", color = "Location", 
+       fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal3) +
+  scale_fill_manual(values = pal3)
 ```
 
 
@@ -735,17 +740,19 @@ h3c <- ggplot(bullocks, aes(x = date, y = H3, shape = loc, color = loc)) +
   stat_smooth(method = lm, aes(fill = loc), se = T) +
   theme_classic() +
   mytheme +
-  stat_fit_glance(method = "lm", 
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(y = "Hue (H3)", x = "Collection date", color = "Location", fill = "Location", shape = "Location") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
+#  stat_fit_glance(method = "lm", 
+#                        method.args = list(formula = y ~ x), size = 5, 
+#                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
+#                                            stat(..r.squared..), stat(..p.value..))), 
+#                        parse = TRUE) + 
+  labs(y = "Hue (H3)", x = "Collection date", color = "Location", 
+       fill = "Location", shape = "Location") +
+  scale_color_manual(values = pal3) +
+  scale_fill_manual(values = pal3)
 ```
 
-Merge 
 
+Merge 
 ```{r Merge all plots, message = FALSE}
 pg <- plot_grid(
   h3a + theme(legend.position="none"),
@@ -761,13 +768,11 @@ leg <- get_legend(h3a + theme(legend.box.margin = margin(0,0,0,12)))
 
 plot_grid(pg, leg, rel_widths = c(6, 0.8))
 
-ggsave("Figure_h3.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
+ggsave("Figure5.png", plot=last_plot(), width=400, height=125, units="mm", dpi=600, scale=T)
 ```
 
 
 <br>
-
-
 
 
 # Avian visual models
@@ -776,18 +781,17 @@ Using smoothed and averaged data: `allspec.orn.avg` and `allspec.blk.avg`
 
 ## Noise-weighted distances with the Receptor Noise Model 
 
-```{r, message= FALSE}
+```{r avian visual models, message= FALSE}
 vismod.orn <- vismodel(allspec.orn.avg,
   visual = "avg.uv", achromatic = "bt.dc", #blue tit double cone
   illum = "D65", relative = FALSE)
 summary(vismod.orn)
-
+vismod.orn
 
 # Get color distances
 vismod.orn.dist <- coldist(vismod.orn,
   noise = "neural", achromatic = TRUE, n = c(1, 2, 2, 4),
-  weber = 0.1, weber.achro = 0.1
-)
+  weber = 0.1, weber.achro = 0.1)
 
 
 # bootstrap color distances
@@ -795,82 +799,23 @@ cate <- allcategory[-1] # get list made from above but remove wl from vector
 
 vm.orn.dist <- bootcoldist(vismod.orn, by = cate, n = c(1,2,2,4), weber=0.1, achromatic = FALSE)
 #vm.orn.dist
-
-#achromatic
-vm.orn.dist.achro <- bootcoldist(vismod.orn, by = cate, n = c(1,2,2,4), weber=0.1, achromatic = TRUE, weber.achro = 0.1)
 ```
 
-```{r, fig.cap = "**Fig.** Chromatic contrasts (dS), horizontal."}
-# plot
-plot(vm.orn.dist[, 1], 
-     ylim = c(0, 5), 
-     pch = 21, 
-     bg = 1, 
-     cex = 2, 
-     xaxt = 'n', 
-     xlab = 'Centroid comparison', 
-     ylab = 'Chromatic contrast (dS)')
-axis(1, at = 1:10, labels = rownames(vm.orn.dist))
-segments(1:10, vm.orn.dist[, 2], 1:10, vm.orn.dist[, 3], lwd = 2)  # Add CI's
-abline(h = 1, lty = 3, lwd = 2)  # Add a 'threshold' line at dS = 1
-```
 
-```{r, fig.cap = "**Fig.** Chromatic contrasts (dS), vertical."}
+```{r, fig.cap = "**Fig 6.** Chromatic contrasts (dS), vertical", message= FALSE}
 # ggplot
 # need to convert matrix into a usable data frame
 vod <- as.data.frame(as.table(vm.orn.dist))
 vod2 <- pivot_wider(vod, names_from = Var2, values_from = Freq)
 
-
-ggplot(vod2, aes(x=Var1, y=dS.mean)) +
-  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.4, position = position_dodge(width=1), size=1) +
-  geom_point(position = position_dodge(width=1), size=5) +
-  theme_classic()+ 
-  mytheme + 
-  theme(text=element_text(family="sans")) +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  coord_flip() +
-  labs(x="Centroid comparison", y = "Chromatic contrast (\u0394S)") +
-  theme(panel.background = element_rect(fill = "transparent"), # bg of the panel
-    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-    panel.grid.major = element_blank(), # get rid of major grid
-    panel.grid.minor = element_blank(), # get rid of minor grid
-    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-    legend.box.background = element_rect(fill = "transparent"))
-
-ggsave("chromatic_contrast.png", plot = last_plot(), width = 200, height = 120, units = "mm", dpi = 300,  bg = "transparent")
-
-
-
-############################
 # select comparisons
 vod3 <- vod2 %>% 
-  filter(Var1 == "Bull_hist-Bull_mod" | Var1 == "Balt_hist-Balt_mod" | Var1 == "Balt_hist-Bull_hist" | Var1 == "Balt_mod-Bull_mod")
+  filter(Var1 == "Bull_hist-Bull_mod" | Var1 == "Balt_hist-Balt_mod" | 
+         Var1 == "Balt_hist-Bull_hist" | Var1 == "Balt_mod-Bull_mod")
 
 ggplot(vod3, aes(x=Var1, y=dS.mean)) +
-  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.3, position = position_dodge(width=1), size=1) +
-  geom_point(position = position_dodge(width=1), size=5) +
-  theme_classic()+ 
-  mytheme + 
-  theme(text=element_text(family="sans")) +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  coord_flip() +
-  labs(x="Centroid comparison", y = "Chromatic contrast (\u0394S)") +
-  theme(panel.background = element_rect(fill = "transparent"), # bg of the panel
-    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-    panel.grid.major = element_blank(), # get rid of major grid
-    panel.grid.minor = element_blank(), # get rid of minor grid
-    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-    legend.box.background = element_rect(fill = "transparent"))+
-  scale_x_discrete(limits = c("Balt_mod-Bull_mod", "Balt_hist-Bull_hist", "Balt_hist-Balt_mod", "Bull_hist-Bull_mod"), 
-                   labels = c("Interspecific modern", "Interspecific historic", expression(paste("Intraspecific ", italic("Icterus galbula"))), expression(paste("Intraspecific ", italic("Icterus bullockii")))))
-ggsave("chromatic_contrast1.png", plot = last_plot(), width = 200, height = 80, units = "mm", dpi = 300,  bg = "transparent")
-
-
-
-#
-ggplot(vod3, aes(x=Var1, y=dS.mean)) +
-  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.3, position = position_dodge(width=1), size=1) +
+  geom_errorbar(aes(ymin = dS.lwr, ymax = dS.upr), width=.3, 
+                position = position_dodge(width=1), size=1) +
   geom_point(position = position_dodge(width=1), size=5) +
   theme_classic()+ 
   mytheme + 
@@ -878,502 +823,21 @@ ggplot(vod3, aes(x=Var1, y=dS.mean)) +
   geom_hline(yintercept = 1, linetype = "dashed") +
   coord_flip(clip="off") +
   labs(x=NULL, y = "Chromatic contrast (\u0394S)") +
-  theme(panel.background = element_rect(fill = "transparent"), axis.title.y = element_text(angle = 0, hjust = 0), # bg of the panel
-    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-    panel.grid.major = element_blank(), # get rid of major grid
-    panel.grid.minor = element_blank(), # get rid of minor grid
-    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-    legend.box.background = element_rect(fill = "transparent"))+
-  scale_x_discrete(limits = c("Balt_mod-Bull_mod", "Balt_hist-Bull_hist", "Balt_hist-Balt_mod", "Bull_hist-Bull_mod"), 
-                   labels = c("Interspecific modern", "Interspecific historic", expression(paste("Intraspecific ", italic("Icterus galbula"))), expression(paste("Intraspecific ", italic("Icterus bullockii"))))) +
-  geom_text(x=4.5, y=0.2, inherit.aes = F, label = "Centroid comparison", check_overlap = T, hjust =1, fontface="bold", size=7)
-ggsave("chromatic_contrast2.png", plot = last_plot(), width = 200, height = 80, units = "mm", dpi = 300,  bg = "transparent")
+  theme(panel.background = element_rect(fill = "transparent"), 
+        axis.title.y = element_text(angle = 0, hjust = 0), # bg of the panel
+        plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+        panel.grid.major = element_blank(), # get rid of major grid
+        panel.grid.minor = element_blank(), # get rid of minor grid
+        legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+        legend.box.background = element_rect(fill = "transparent"))+
+  scale_x_discrete(limits = c("Balt_mod-Bull_mod", "Balt_hist-Bull_hist", 
+                              "Balt_hist-Balt_mod", "Bull_hist-Bull_mod"), 
+                   labels = c("Interspecific contemporary", "Interspecific historic",
+                              expression(paste("Intraspecific ", italic("Icterus galbula"))),
+                              expression(paste("Intraspecific ", italic("Icterus bullockii"))))) +
+  geom_text(x=4.5, y=0.2, inherit.aes = F, label = "Centroid comparison", 
+            check_overlap = T, hjust =1, fontface="bold", size=7)
 
+ggsave("chromatic_contrast.png", plot = last_plot(), width = 200, height = 80, 
+       units = "mm", dpi = 300,  bg = "transparent")
 ```
-
-
-```{r, fig.cap = "**Fig.** Achromatic contrasts (dS), vertical."}
-# achromatic
-vod2 <- as.data.frame(as.table(vm.orn.dist.achro))
-vod3 <- pivot_wider(vod2, names_from = Var2, values_from = Freq)
-
-ggplot(vod3, aes(x=Var1, y=dL.mean)) +
-  geom_errorbar(aes(ymin = dL.lwr, ymax = dL.upr), width=.6, position = position_dodge(width=1), size=1) +
-  geom_point(position = position_dodge(width=1), size=5) +
-  theme_classic()+ 
-  mytheme +
-  theme(text=element_text(family="sans")) +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  coord_flip() +
-  labs(x="Centroid comparison", y = "Achromatic contrast (\u0394L)") +
-  theme(panel.background = element_rect(fill = "transparent"), # bg of the panel
-    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-    panel.grid.major = element_blank(), # get rid of major grid
-    panel.grid.minor = element_blank(), # get rid of minor grid
-    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-    legend.box.background = element_rect(fill = "transparent"))
-ggsave("achromatic_contrast.png", plot = last_plot(), width = 200, height = 120, units = "mm", dpi = 300,  bg = "transparent")
-
-
-##############
-voda <- as.data.frame(as.table(vm.orn.dist.achro))
-voda1 <- pivot_wider(voda, names_from = Var2, values_from = Freq)
-
-voda2 <- voda1 %>% 
-  filter(Var1 == "Bull_hist-Bull_mod" | Var1 == "Balt_hist-Balt_mod" | Var1 == "Balt_hist-Bull_hist" | Var1 == "Balt_mod-Bull_mod")
-
-
-ggplot(voda2, aes(x=Var1, y=dL.mean)) +
-  geom_errorbar(aes(ymin = dL.lwr, ymax = dL.upr), width=.3, position = position_dodge(width=1), size=1) +
-  geom_point(position = position_dodge(width=1), size=5) +
-  theme_classic()+ 
-  mytheme + 
-  theme(text=element_text(family="sans")) +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  coord_flip(clip="off") +
-  labs(x=NULL, y = "Achromatic contrast (\u0394L)") +
-  theme(panel.background = element_rect(fill = "transparent"), axis.title.y = element_text(angle = 0, hjust = 0), # bg of the panel
-    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-    panel.grid.major = element_blank(), # get rid of major grid
-    panel.grid.minor = element_blank(), # get rid of minor grid
-    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-    legend.box.background = element_rect(fill = "transparent"))+
-  scale_x_discrete(limits = c("Balt_mod-Bull_mod", "Balt_hist-Bull_hist", "Balt_hist-Balt_mod", "Bull_hist-Bull_mod"), 
-                   labels = c("Interspecific modern", "Interspecific historic", expression(paste("Intraspecific ", italic("Icterus galbula"))), expression(paste("Intraspecific ", italic("Icterus bullockii"))))) +
-  geom_text(x=4.55, y=-0.1, inherit.aes = F, label = "Centroid comparison", check_overlap = T, hjust =1, fontface="bold", size=7)
-ggsave("achromatic_contrast2.png", plot = last_plot(), width = 200, height = 80, units = "mm", dpi = 300,  bg = "transparent")
-
-```
-
-### Convert color distances to XYZ coordinates
-```{r}
-vismod.orn.cc <- jnd2xyz(vismod.orn.dist, ref1 = "l", axis1 = c(1, 0, 0), ref2 = NULL)
-plot(vismod.orn.cc, theta=55, phi=25, col=spec2rgb(allspec.orn.avg))
-jndplot(vismod.orn.cc, theta=55, phi=25, col=spec2rgb(allspec.orn.avg), arrow.labels = TRUE)
-```
-
-<br>
-
-## Test for differences in groups 
-- Are the samples statistically separate in color space? 
-
-https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/beheco/29/3/10.1093_beheco_ary017/1/ary017_suppl_supplementary_material.html?Expires=1614112080&Signature=oDIUd-WkV00PmIsMMzpiW6mE6w0d0vJhS~Qly7ck5B7mReHRnnEVBmzzipJMN~sLsXOgoZx-yhj7fEPu6~7YARBU0DdVht7BhU2wNLd~upjxfiqnaoNhPtJqQ9NcYIEGR92pXG3y15XVojmhpHK9GnWlgty5-JJN5Cyck5mNXq6m~-OcQrpJEDwxtlikhRsC9NykQsIb4lN0qn1XZNh7I6fYjzDyqfAU8DZcvkXCOz0f419HmGax~nMZi7HmPM4qLQPCtyYJlDCgCE1tW-YyYwoTN9Y~nCLE4k28qFgofFSrNfIvGdq4X1SzEGkzSaAo3YlbpguAB7orp-pGPBRQzw__&Key-Pair-Id=APKAIE5G5CRDK6RD3PGA
-
-```{r message=FALSE, warning=FALSE, results=FALSE}
-library(vegan)
-1) Using *distance-based PERMANOVA* (Maia & White 2018): using `adonis` fx from R package `vegan` (distance PERMANOVA)
-
-
-library(MCMCglmm)
-library(RColorBrewer)
-library(biotools)
-
-mat <- dist(coldist2mat(vismod.orn.dist)[['dS']])
-# group <- substring(rownames(as.matrix(mat)), 1, 1)
-# use at.orn instead as a grouping factor
-
-#### Test for separation among groups
-# test assumption of homogeneity of variances
-bdisp <- betadisper(mat, cate, type='centroid')
-anova(bdisp) #0.01229 * 
-# Groups have unequal variances, which can influence the results of the PERMANOVA. 
-
-TukeyHSD(bdisp) # only sig for Baltmod-Balthist and Bullmod-Balthist
-
-pmanova <- adonis(mat~cate)
-pmanova
-#Permutation: free
-#Number of permutations: 999
-
-#           Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)    
-#cate        4    2481.2  620.31  10.783 0.2745  0.001 ***
-#Residuals 114    6557.9   57.53         0.7255           
-#Total     118    9039.1                 1.0000           
-```
-
-Testing for above-threshold mean differences between groups: [done]
-We will use a bootstrap approach to consider the uncertainty on the mean difference between groups when comparing it to a threshold value of 1 JND.
-```{r}
-# vm.orn.dist <- bootcoldist(vismod.orn, by = cate, n = c(1,2,2,4), weber=0.1, achromatic = FALSE)
-
-#vm.orn.dist
-```
-
-
-2) On XYZ coordinates, apply a MANOVA test (Cartesian MANOVA)
-
-`vismod.orn.cc` <- jnd2xyz(vismod.orn.dist, ref1 = "l", axis1 = c(1, 0, 0), ref2 = NULL)
-
-```{r}
-plot(vismod.orn.cc, col=c("red", "blue", "yellow", "black", "green", "orange"), cex=1.5) 
-# change color palette
-
-#### Test for separation among groups
-# Perform Box's M-test for homogeneity of variances to test the assumption of equal covariances
-
-boxM(vismod.orn.cc[,c('x', 'y', 'z')], cate)
-# Chi-Sq (approx.) = 36.659, df = 24, p-value = 0.0473
-
-# all groups have equal covariances
-
-#### run MANOVA on cartesian coordinates
-summary(manova(lm(cbind(x,y,z)~cate, data = vismod.orn.cc)))
-#           Df Pillai approx F num Df den Df    Pr(>F)    
-#at.orn      4 0.91818    12.57     12    342 < 2.2e-16 ***
-
-
-```
-
-
-- Is this separation perceptually discriminable? 
-
--> Estimate distance in color space between-group geometric means rather than through average pairwise distance or volume-overlap based 
-    This is `vm.orn.dist`
-
-
-
-
-## Color space
-Though these models do not account for receptor noise (and thus do not allow an estimate of JNDs), they presents several advantages. First, they make for a very intuitive representation of colour points accounting for attributes of the colour vision of the signal receiver. Second, they allow for the calculation of several interesting variables that represent colour. e.g. hue can be estimated from the angle of the point relative to the xy plane (blue-green-red) and the z axis (UV); saturation can be estimated as the distance of the point from the achromatic centre.
-
-```{r, results=FALSE}
-# original
-vismod.orn <- vismodel(allspec.orn.avg,
-  visual = "avg.uv", achromatic = "bt.dc", #blue tit double cone
-  illum = "D65", relative = FALSE)
-
-# adjust parameters for color space model, bright viewing conditions and relative = T
-vismod.orn2 <- vismodel(allspec.orn.avg, visual = "avg.uv", achromatic = "bt.dc", scale = 10000, relative = TRUE)
-
-# create color space
-tetra.orn2 <- colspace(vismod.orn2, space = "tcs") #
-head(tetra.orn2)
-# r.vec is the measure of saturation
-
-# add attribute data
-torn <- as.data.frame(tetra.orn2)
-tcat <- att %>%  # created from above
-  dplyr::select(ID, cat, date)
-  
-
-torn$ID <- tcat$ID
-torn$cat <- tcat$cat
-torn$date <- tcat$date
-torn$sp <- gsub("\\_.*", "", torn$cat)
-torn$type <- gsub(".*_", "", torn$cat)
-
-torn2 <- torn %>% 
-  dplyr::select(ID, cat, sp, type, date, r.vec)
-```
-
-
-#### split by species
-```{r}
-#### like figures before
-bacomp <- list(c("Balt_ref", "Balt_hist"), c("Balt_hist", "Balt_mod"), c("Balt_ref", "Balt_mod"))
-bucomp <- list(c("Bull_ref", "Bull_hist"), c("Bull_hist", "Bull_mod"), c("Bull_ref", "Bull_mod"))
-
-# Bullocks
-toba <- torn2[which(torn2$sp == "Balt"),]
-tobu <- torn2[which(torn2$sp == "Bull"),]
-  
-ggplot(tobu, aes(x=cat, y=r.vec)) +
-  stat_boxplot(aes(x=cat, y=r.vec), geom="errorbar", position = position_dodge(width=.75), width=.5) +
-  geom_boxplot(outlier.size=1.5, position=position_dodge(width=.75), col="black", fill = "#fa8500") +
-  theme_classic()+ 
-  stat_compare_means(comparisons = bucomp, method = "t.test", label.y = c(0.41, 0.42, 0.43),label = "p.signif", size = 6) +
-  mytheme +
-  labs(y = "Saturation") +
-  scale_x_discrete(name="Bullock's oriole", limits=c("Bull_ref", "Bull_hist","Bull_mod"), labels=c("Reference","Historic", "Modern"))
-
-ggsave("bu_orn_saturation_cat.tiff", plot = ggplot2::last_plot(), width=150, height=180, units="mm", dpi=300)
-```
-
-<br>
-
-# Tetrahedral plot
-```{r}
-### plots
-plot(tetra.orn2, col = spec2rgb(allspec.orn.avg), perspective = TRUE,  pch = 21, cex=0.5, zoom=1, phi=30)
-# orange points in a tetrachromatic colorspace, as modelled according to blue tit visual system
-```
-
-<br>
-
-# PCA
-```{r PCA, message=FALSE, warning=FALSE}
-library(ggfortify)
-library(cluster)
-library(grid)
-library(gridExtra)
-
-spec.bin <- procspec(allspec.orn.avg, opt = c("bin", "center"))
-colnames(spec.bin) <- allcategory 
-
-spec.bin <- t(spec.bin) 
-spec.bin <- spec.bin[-1, ]
-pca1 <- prcomp(spec.bin, scale. = TRUE)
-
-summary(pca1) #PC1 explains 65% of the variation in spectral shape and describes the ratio of short to long wavelengths reflected
-
-ao <- as.character(cate)
-sb <- cbind(spec.bin, ao)
-
-#autoplot(pca1, data=sb, colour="ao")
-
-autoplot(pca1, data=sb, colour="ao", frame=TRUE, frame.type = "norm")
-```
-
-Subset for better visualization
-```{r, message = FALSE, results=FALSE}
-####
-## Remove for better visualization
-### change names for subsetting
-soa <- allspec.orn.avg
-colnames(soa) <- allcategory
-```
-
-### Within Baltimore, historic vs modern
-```{r, message = FALSE, results=FALSE}
-baltmodhist <- subset(soa, c("Balt_mod", "Balt_hist")) # n = 40 but names changed? 
-
-spec.bin.bamh <- procspec(baltmodhist, opt = c("bin", "center"))
-
-spec.bin.bamh <- t(spec.bin.bamh) 
-spec.bin.bamh <- spec.bin.bamh[-1, ]
-pca.bamh <- prcomp(spec.bin.bamh, scale. = TRUE)
-
-summary(pca.bamh) # 71.7% of variation
-
-bamh <- as.character(colnames(baltmodhist))
-bamh <- gsub("\\..*", "", bamh) # remove everything after "."
-bamh <- bamh[-1]
-bamh1 <- ifelse(bamh == "Balt_hist", "Historic", "Modern") 
-sb.bamh <- cbind(spec.bin.bamh, bamh1) 
-
-pca.ba <- autoplot(pca.bamh, data=sb.bamh, colour = "bamh1", shape = "bamh1", frame=TRUE, frame.type = "norm", size = 2) + 
-  theme_classic() +
-  mytheme +
-  scale_color_manual(values = pal.ba) +
-  scale_fill_manual(values = pal.ba) +
-  labs(fill="Specimen type", color="Specimen type", shape = "Specimen type")
-ggsave("pca_baltimore_mod_hist.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-### Within Bullock's, historic vs modern
-```{r, message = FALSE, results=FALSE}
-bullmodhist <- subset(soa, c("Bull_mod", "Bull_hist")) # n = 40 but names changed? 
-
-spec.bin.bumh <- procspec(bullmodhist, opt = c("bin", "center"))
-
-spec.bin.bumh <- t(spec.bin.bumh) 
-spec.bin.bumh <- spec.bin.bumh[-1, ]
-pca.bumh <- prcomp(spec.bin.bumh, scale. = TRUE)
-
-summary(pca.bumh) # 55.5% of variation
-
-bumh <- as.character(colnames(bullmodhist))
-bumh <- gsub("\\..*", "", bumh) # remove everything after "."
-bumh <- bumh[-1]
-bumh1 <- ifelse(bumh == "Bull_hist", "Historic", "Modern") 
-sb.bumh <- cbind(spec.bin.bumh, bumh1) 
-
-
-pca.bu <- autoplot(pca.bumh, data = sb.bumh, colour = "bumh1", shape = "bumh1", frame = TRUE, frame.type = "norm", size = 2) + 
-  theme_classic() +
-  mytheme +
-  scale_color_manual(values = pal.bu) +
-  scale_fill_manual(values = pal.bu) +
-  labs(fill = "Specimen type", color = "Specimen type", shape = "Specimen type")
-
-ggsave("pca_bullocks_mod_hist.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-
-Plot together 
-```{r}
-label <- autoplot(pca.bumh, data = sb.bumh, shape = "bumh1", frame = TRUE, frame.type = "norm", size = 1.99) +
-  labs(shape = "Specimen type") +
-  theme_classic() +
-  mytheme 
-
-
-pg.pca <- plot_grid(
-  pca.bu + theme(legend.position="none"),
-  pca.ba + theme(legend.position="none"),
-  align = 'vh',
-  labels = c("A", "B"),
-  hjust = -1,
-  nrow = 1, label_size = 20
-)
-
-
-leg.pca <- get_legend(label + theme(legend.box.margin = margin(0,0,0,12)))
-
-plot_grid(pg.pca, leg.pca, rel_widths = c(5, 1))
-
-ggsave("Figure_pca.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
-```
-
-
-
-### Within Bullocks, all 3
-```{r, message = FALSE, results=FALSE}
-bullmodhistref <- subset(soa, c("Bull_mod", "Bull_hist", "Bull_ref")) # n = 40 but names changed? 
-
-spec.bin.bumhr <- procspec(bullmodhistref, opt = c("bin", "center"))
-
-spec.bin.bumhr <- t(spec.bin.bumhr) 
-spec.bin.bumhr <- spec.bin.bumhr[-1, ]
-pca.bumhr <- prcomp(spec.bin.bumhr, scale. = TRUE)
-
-bumhr <- as.character(colnames(bullmodhistref))
-bumhr <- gsub("\\..*", "", bumhr) # remove everything after "."
-bumhr <- bumhr[-1]
-sb.bumhr <- cbind(spec.bin.bumhr, bumhr) 
-
-autoplot(pca.bumhr, data=sb.bumhr, colour = "bumhr", frame=TRUE, frame.type = "norm") + 
-  theme_classic() +
-  mytheme +
-  labs(fill="Specimen type", color="Specimen type")
-
-ggsave("pca_bullocks_all.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-## Contrast between species
-
-### Historic 
-```{r, message = FALSE, results=FALSE}
-## Historic
-intercolorhist <- subset(soa, c("Bull_hist", "Balt_hist")) # n = 40 but names changed? 
-
-spec.bin.ich <- procspec(intercolorhist, opt = c("bin", "center"))
-
-spec.bin.ich <- t(spec.bin.ich) 
-spec.bin.ich <- spec.bin.ich[-1, ]
-pca.ich <- prcomp(spec.bin.ich, scale. = TRUE)
-
-ich <- as.character(colnames(intercolorhist))
-ich <- gsub("\\..*", "", ich) # remove everything after "."
-ich <- ich[-1]
-ich1 <- ifelse(ich == "Balt_hist", "Baltimore", "Bullock's")
-sb.ich <- cbind(spec.bin.ich, ich1) 
-
-pca.hist <- autoplot(pca.ich, data = sb.ich, colour = "ich1", frame=TRUE, frame.type = "norm", size = 2) + 
-  theme_classic() +
-  mytheme +
-  labs(fill="Species", color="Species") +
-  scale_shape_manual(values = c(16, 16), limits = c("Bullock's", "Baltimore")) +
-  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
-  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
-
-ggsave("pca_inter_historic.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-
-### Modern
-```{r, message = FALSE, results=FALSE}
-intercolormod <- subset(soa, c("Bull_mod", "Balt_mod")) # n = 40 but names changed? 
-
-spec.bin.icm <- procspec(intercolormod, opt = c("bin", "center"))
-
-spec.bin.icm <- t(spec.bin.icm) 
-spec.bin.icm <- spec.bin.icm[-1, ]
-pca.icm <- prcomp(spec.bin.icm, scale. = TRUE)
-
-icm <- as.character(colnames(intercolormod))
-icm <- gsub("\\..*", "", icm) # remove everything after "."
-icm <- icm[-1]
-icm1 <- ifelse(icm == "Balt_mod", "Baltimore", "Bullock's")
-sb.icm <- cbind(spec.bin.icm, icm1) 
-
-
-pca.mod <- autoplot(pca.icm, data = sb.icm, shape = "icm1", colour = "icm1", frame=TRUE, frame.type = "norm", size = 2) + 
-  theme_classic() +
-  mytheme +
-  labs(fill="Species", color="Species") +
-  scale_shape_manual(values = c(17, 17), limits = c("Bullock's", "Baltimore")) +
-  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
-  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
-pca.mod
-ggsave("pca_inter_modern.tiff", plot = ggplot2::last_plot(), width=200, height=150, units="mm", dpi=300)
-```
-
-
-Plot together 
-```{r}
-label1 <- autoplot(pca.icm, data = sb.icm, shape = "icm1", colour = "icm1", frame=TRUE, frame.type = "norm", size = 1.99) + 
-  theme_classic() +
-  mytheme +
-  labs(fill="Species", color="Species", shape = "Species") +
-  scale_shape_manual(values = c(4, 4), limits = c("Bullock's", "Baltimore")) +
-  scale_fill_manual(values = pal1, limits = c("Bullock's", "Baltimore")) +
-  scale_color_manual(values = pal1, limits = c("Bullock's", "Baltimore"))
-label1
-
-pg.pca1 <- plot_grid(
-  pca.hist + theme(legend.position="none"),
-  pca.mod + theme(legend.position="none"),
-  align = 'vh',
-  labels = c("C", "D"),
-  hjust = -1,
-  nrow = 1, label_size = 20
-)
-
-
-leg.pca1 <- get_legend(label1 + theme(legend.box.margin = margin(0,0,0,12)))
-
-plot_grid(pg.pca1, leg.pca1, rel_widths = c(5, 1))
-
-ggsave("Figure_pca1.png", plot=last_plot(), width=400, height=150, units="mm", dpi=600, scale=T)
-```
-
-
-
-
-Plot brightness overtime
-```{r}
-orn1 <- ggplot(bullocks, aes(x = date, y = B1)) +
-  geom_point(size = 2) +
-  stat_smooth(method = lm, se = T, color="#ffa600", fill="#ffa600") +
-  theme_classic() +
-  mytheme +
-  stat_fit_glance(method = "lm", 
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(y = "Orange patches - total brightness (B1)", x= "Collection date") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
-
-################
-
-bullblk <- alldat.blk[which(alldat.blk$sp == "Bull"),]
-
-blk1 <- ggplot(bullblk, aes(x = date, y = B1)) +
-  geom_point(size = 2) +
-  stat_smooth(method = lm, se = T, color="darkgray", fill="darkgray") +
-  theme_classic() +
-  mytheme +
-  stat_fit_glance(method = "lm", 
-                        method.args = list(formula = y ~ x), size = 5, 
-                        aes(label = sprintf('R^2~"="~%.3f~~italic(p)~"="~%.3g',
-                                            stat(..r.squared..), stat(..p.value..))), parse = TRUE) + 
-  labs(y = "Black patches - total brightness (B1)", x= "Collection date") +
-  scale_color_manual(values = pal1) +
-  scale_fill_manual(values = pal1)
-
-pg_time <- plot_grid(
-  orn1 + theme(legend.position="none"),
-  blk1 + theme(legend.position="none"),
-  align = 'vh',
-  labels = c("A", "B"),
-  hjust = -1,
-  nrow = 1, label_size = 16
-)
-
-plot_grid(pg_time)
-
-ggsave("Figure_time_B1.png", plot=last_plot(), width=300, height=125, units="mm", dpi=600, scale=T)
-```
-
