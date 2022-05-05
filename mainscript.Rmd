@@ -284,7 +284,7 @@ colnames(asoa.bu2) <- allcat3$allcategory
 
 
 # plot & save
-png("all_spectra_bullocks.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+png("all_spectra_bullocks_long.png", width = 1600, height = 800, pointsize = 22, res = 100, bg = "transparent")
 aggplot(asoa.bu2, by = allcat3$allcategory, FUN.center = median, ylim = c(0, 65),
         alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
 legend(290, 67, legend = c("Historic", "Contemporary"), col = c("red", "royalblue"), 
@@ -293,7 +293,7 @@ dev.off()
 
 
 
-png("all_spectra_baltimore.png", width = 800, height = 800, pointsize = 22, res = 100, bg = "transparent")
+png("all_spectra_baltimore_long.png", width = 1600, height = 800, pointsize = 22, res = 100, bg = "transparent")
 aggplot(asoa.ba, by = allcat2$allcategory, FUN.center = median, ylim = c(0, 65),
         alpha = 0.3, legend = F, cex.lab = 1.5, cex.axis = 1.5, lwd=2)
 legend(290, 67, legend = c("Historic", "Contemporary"), col = c("red", "royalblue"), 
@@ -561,7 +561,7 @@ b1blk <- ggplot(compare1, aes(x = cat, y = B1, fill = sp)) +
   stat_compare_means(comparisons = comparelist, method = "t.test", label = "p.signif", size = 6) + 
   theme_classic()+ 
   mytheme +
-  labs(y = "Total brightness (B1)") +
+  labs(y = "Black plumage brightness (B1)") +
   scale_fill_manual(values = pal1, name = "Species", 
                     limits = c("Bull", "Balt"), 
                     labels = c(expression(italic("Icterus bullockii")), 
